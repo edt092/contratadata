@@ -1,0 +1,39 @@
+name: Run ETL Pipeline
+
+on:
+  schedule:
+    # Ejecuta todos los días a las 03:00 UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      max_records:
+        description: "Límite de registros a extraer (0 = sin límite)"
+        required: false
+        default: "0"
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run ETL
+        run: |
+          docker compose build etl
+          docker compose up -d db
+          echo "Esperando que db esté lista..."
+          sleep 15
+          docker compose run \
+            -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            -e SOCRATA_APP_TOKEN=${{ secrets.SOCRATA_APP_TOKEN }} \
+            -e MAX_RECORDS=${{ github.event.inputs.max_records || '0' }} \
+            etl python pipeline.py
+
+      - name: Show ETL logs on failure
+        if: failure()
+        run: docker compose logs etl
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down

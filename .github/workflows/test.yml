@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: contratadb_test
+          POSTGRES_USER: contratauser
+          POSTGRES_PASSWORD: contratapass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U contratauser -d contratadb_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Apply DB schema
+        run: |
+          PGPASSWORD=contratapass psql \
+            -h localhost -U contratauser -d contratadb_test \
+            -f scripts/init_db.sql
+        env:
+          PGPASSWORD: contratapass
+
+      - name: Run tests
+        run: pytest tests/ -v --cov=src --cov-report=term-missing
+        env:
+          DATABASE_URL: postgresql://contratauser:contratapass@localhost:5432/contratadb_test
+          SOCRATA_APP_TOKEN: ""

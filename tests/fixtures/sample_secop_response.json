@@ -1,0 +1,42 @@
+[
+  {
+    "nombre_entidad": "MINISTERIO TIC",
+    "proveedor_adjudicado": "TECNOLOGÍAS S.A.S.",
+    "valor_del_contrato": "15000000",
+    "fecha_de_firma": "2024-03-15T00:00:00.000",
+    "estado_contrato": "Liquidado",
+    "proceso_de_compra": "CO1.PCCNTR.2024001",
+    "identificacion_proveedor": "900123456",
+    "nit_entidad": "800000001"
+  },
+  {
+    "nombre_entidad": "SENA",
+    "proveedor_adjudicado": "CAPACITACIONES LTDA",
+    "valor_del_contrato": "8500000",
+    "fecha_de_firma": "2024-06-01T00:00:00.000",
+    "estado_contrato": "En ejecución",
+    "proceso_de_compra": "CO1.PCCNTR.2024002",
+    "identificacion_proveedor": "900654321",
+    "nit_entidad": "890912874"
+  },
+  {
+    "nombre_entidad": "ICBF",
+    "proveedor_adjudicado": "SUMINISTROS EXPRESS",
+    "valor_del_contrato": "-500",
+    "fecha_de_firma": "2024-07-10T00:00:00.000",
+    "estado_contrato": "Terminado",
+    "proceso_de_compra": "CO1.PCCNTR.2024003",
+    "identificacion_proveedor": "800111222",
+    "nit_entidad": "899999043"
+  },
+  {
+    "nombre_entidad": "ENTIDAD DESCONOCIDA XYZ",
+    "proveedor_adjudicado": "PROVEEDOR RANDOM",
+    "valor_del_contrato": "3000000",
+    "fecha_de_firma": null,
+    "estado_contrato": "En ejecución",
+    "proceso_de_compra": "CO1.PCCNTR.2024004",
+    "identificacion_proveedor": "700777888",
+    "nit_entidad": "999000111"
+  }
+]
