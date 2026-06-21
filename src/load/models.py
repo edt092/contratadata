@@ -67,6 +67,15 @@ class Contract(Base):
         return f"<Contract id={self.id} valor={self.valor} fecha={self.fecha}>"
 
 
+class PipelineMeta(Base):
+    """Metadatos del pipeline (ej. timestamp de la última corrida exitosa)."""
+    __tablename__ = "pipeline_meta"
+
+    key        = Column(String(100), primary_key=True)
+    value      = Column(String(500), nullable=False)
+    updated_at = Column(DateTime, nullable=False, default=func.now())
+
+
 class RejectedRecord(Base):
     __tablename__ = "rejected_records"
 

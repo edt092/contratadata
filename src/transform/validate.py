@@ -43,16 +43,16 @@ def _rule_fecha_valida(record: dict) -> str | None:
     return "fecha_no_parseable"
 
 
-def _rule_entidad_resoluble(record: dict) -> str | None:
+def _rule_entidad_presente(record: dict) -> str | None:
     if not record.get("entidad_canonica"):
-        return "entidad_no_resoluble"
+        return "entidad_vacia"
     return None
 
 
 RULES: list[RuleFunc] = [
     _rule_valor_positivo,
     _rule_fecha_valida,
-    _rule_entidad_resoluble,
+    _rule_entidad_presente,
 ]
 
 

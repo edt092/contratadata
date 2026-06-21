@@ -9,11 +9,15 @@ Documentación SODA: https://dev.socrata.com/consumers/getting-started.html
 import logging
 import os
 import time
-from typing import Iterator
+from datetime import datetime
+from typing import TYPE_CHECKING, Iterator
 
 import requests
 
 from src.extract.base import BaseExtractor
+
+if TYPE_CHECKING:
+    from src.error_log import PipelineErrorLog
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +25,26 @@ ENDPOINT = "https://www.datos.gov.co/resource/jbjy-vk9h.json"
 PAGE_SIZE = 1000
 MAX_RETRIES = 3
 BACKOFF_SECONDS = 5
+REQUEST_TIMEOUT = 60
+PAGE_DELAY = 1.5  # segundos entre páginas para no saturar el servidor
 
 
 class SecopSocrataExtractor(BaseExtractor):
     SOURCE_NAME = "SECOP_SOCRATA"
 
-    def __init__(self, app_token: str | None = None, max_records: int | None = None):
+    def __init__(
+        self,
+        app_token: str | None = None,
+        max_records: int | None = None,
+        date_from: str | None = None,
+        since: datetime | None = None,
+        error_log: "PipelineErrorLog | None" = None,
+    ):
         self._app_token = app_token or os.getenv("SOCRATA_APP_TOKEN")
-        self._max_records = max_records  # None = sin límite (dataset completo)
+        self._max_records = max_records
+        self._date_from = date_from or os.getenv("DATE_FROM")
+        self._since = since  # filtro incremental por :updated_at
+        self._error_log = error_log
 
     def _build_headers(self) -> dict:
         headers = {"Accept": "application/json"}
@@ -37,6 +53,7 @@ class SecopSocrataExtractor(BaseExtractor):
         return headers
 
     def _fetch_page(self, offset: int) -> list[dict]:
+        last_exc: Exception | None = None
         params = {
             "$limit": PAGE_SIZE,
             "$offset": offset,
@@ -47,29 +64,42 @@ class SecopSocrataExtractor(BaseExtractor):
                 "fecha_de_firma,"
                 "estado_contrato,"
                 "proceso_de_compra,"
-                "identificacion_proveedor,"
+                "documento_proveedor,"
                 "nit_entidad"
             ),
-            "$order": ":id",
+            "$order": ":id DESC",
         }
+        conditions = []
+        if self._since:
+            # Incremental: solo registros añadidos/modificados en Socrata desde la última corrida
+            conditions.append(f":updated_at >= '{self._since.strftime('%Y-%m-%dT%H:%M:%S')}'")
+        if self._date_from:
+            # Filtro manual por fecha de firma (backfill o carga inicial acotada)
+            conditions.append(f"fecha_de_firma >= '{self._date_from}'")
+        if conditions:
+            params["$where"] = " AND ".join(conditions)
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 resp = requests.get(
                     ENDPOINT,
                     headers=self._build_headers(),
                     params=params,
-                    timeout=30,
+                    timeout=REQUEST_TIMEOUT,
                 )
                 resp.raise_for_status()
                 return resp.json()
             except requests.RequestException as exc:
+                last_exc = exc
                 logger.warning(
                     "Intento %d/%d fallido (offset=%d): %s",
                     attempt, MAX_RETRIES, offset, exc,
                 )
                 if attempt < MAX_RETRIES:
                     time.sleep(BACKOFF_SECONDS * attempt)
-        logger.error("Se agotaron los reintentos en offset=%d", offset)
+        msg = f"Se agotaron los reintentos en offset={offset}: {last_exc}"
+        logger.error(msg)
+        if self._error_log:
+            self._error_log.log("Extracción — API", msg)
         return []
 
     def extract(self) -> Iterator[dict]:
@@ -95,6 +125,7 @@ class SecopSocrataExtractor(BaseExtractor):
 
             offset += PAGE_SIZE
             logger.debug("Página procesada (offset=%d, registros=%d)", offset, len(page))
+            time.sleep(PAGE_DELAY)
 
         logger.info("Extracción finalizada: %d registros extraídos.", total_yielded)
 
@@ -107,6 +138,7 @@ class SecopSocrataExtractor(BaseExtractor):
             "valor": raw.get("valor_del_contrato"),
             "fecha": raw.get("fecha_de_firma"),
             "estado": (raw.get("estado_contrato") or "").strip(),
+            "identificacion_proveedor": (raw.get("documento_proveedor") or "").strip(),
             "fuente": SecopSocrataExtractor.SOURCE_NAME,
             "_raw": raw,  # payload original para rejected_records
         }

@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── ContrataData theme (data-theme + dark class) ──────────────────────────── */
+:root,
+.dark {
+  --bg: #0F1117;
+  --surface: #1A1F2E;
+  --surface2: #222838;
+  --border: #2A3040;
+  --primary: #3B82F6;
+  --primary-weak: rgba(59, 130, 246, 0.14);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --text: #F1F5F9;
+  --muted: #94A3B8;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+  /* shadcn/ui variables (dark) */
+  --background: 222 47% 5%;
+  --foreground: 210 40% 96%;
+  --card: 222 47% 10%;
+  --card-foreground: 210 40% 96%;
+  --popover: 222 47% 10%;
+  --popover-foreground: 210 40% 96%;
+  --primary-shadcn: 217 91% 60%;
+  --primary-foreground: 222 47% 5%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 96%;
+  --muted-shadcn: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 96%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 96%;
+  --border-shadcn: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 217 91% 60%;
+  --radius: 0.5rem;
+}
+
+[data-theme='light'],
+:root:not(.dark) {
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface2: #F1F5F9;
+  --border: #E2E8F0;
+  --primary: #1D4ED8;
+  --primary-weak: rgba(29, 78, 216, 0.10);
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #DC2626;
+  --text: #0F172A;
+  --muted: #64748B;
+
+  /* shadcn/ui variables (light) */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 5%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 5%;
+  --primary-shadcn: 222 47% 45%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 5%;
+  --muted-shadcn: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 5%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border-shadcn: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 222 47% 45%;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background: #0F1117; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background 0.2s, color 0.2s;
+}
+
+::selection { background: rgba(59, 130, 246, 0.3); }
+
+input, select, button { font-family: inherit; }
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+@keyframes ccFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ccPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.animate-fade { animation: ccFade 0.4s ease both; }
+.animate-pulse-dot { animation: ccPulse 2s ease-in-out infinite; }
+
+/* ── Utility classes ───────────────────────────────────────────────────────── */
+.row-hover:hover { background: var(--surface2); }
+
+.btn-link {
+  background: transparent; border: none; cursor: pointer;
+  font-family: inherit; padding: 0; color: inherit;
+  transition: color 0.15s;
+}
+.btn-link:hover { color: var(--primary); }
+
+.btn-link-ent {
+  background: transparent; border: none; cursor: pointer;
+  font-family: inherit; padding: 0; color: var(--text);
+  font-weight: 600; font-size: 13.5px; text-align: left;
+  transition: color 0.15s;
+}
+.btn-link-ent:hover { color: var(--primary); }
+
+.btn-link-con {
+  background: transparent; border: none; cursor: pointer;
+  font-family: inherit; padding: 0; color: var(--muted);
+  font-size: 13.5px; text-align: left; transition: color 0.15s;
+}
+.btn-link-con:hover { color: var(--primary); }
+
+.bar-btn {
+  display: grid; background: transparent; border: none;
+  cursor: pointer; padding: 0; text-align: left; transition: opacity 0.15s;
+}
+.bar-btn:hover { opacity: 0.82; }
+
+.nav-btn {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; padding: 7px 13px;
+  border-radius: 8px; letter-spacing: -0.01em; transition: color 0.15s;
+}
+
+/* ── Tremor dark mode overrides ────────────────────────────────────────────── */
+.dark .tremor-AreaChart-root,
+.dark .tremor-BarChart-root,
+.dark .tremor-BarList-root {
+  color: var(--text);
+}

@@ -82,5 +82,6 @@ def resolve_entity(raw_name: str) -> str | None:
 def normalize_record(record: dict) -> dict:
     """Agrega 'entidad_canonica' al registro; no modifica el original."""
     result = dict(record)
-    result["entidad_canonica"] = resolve_entity(record.get("entidad", ""))
+    raw_name = record.get("entidad", "")
+    result["entidad_canonica"] = resolve_entity(raw_name) or raw_name.strip() or None
     return result

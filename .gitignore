@@ -1,4 +1,8 @@
 .env
+.env.local
+.env.*.local
+errors.md
+pipeline_run.log
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -7,3 +11,8 @@ htmlcov/
 *.egg-info/
 dist/
 build/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
