@@ -83,7 +83,7 @@ def test_fecha_nula_es_rechazada():
 def test_entidad_no_resoluble_es_rechazada():
     rec = _make_valid_record(entidad_canonica=None)
     result = validate_records([rec])
-    assert result.rejected[0]["_motivo_rechazo"] == "entidad_no_resoluble"
+    assert result.rejected[0]["_motivo_rechazo"] == "entidad_vacia"
 
 
 def test_mixed_batch(sample_raw_records):
