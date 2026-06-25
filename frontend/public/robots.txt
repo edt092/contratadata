@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /pipeline
 
-Sitemap: https://contratadata.online/sitemap.xml
+Sitemap: https://contratadata.xyz/sitemap.xml

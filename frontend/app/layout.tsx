@@ -11,12 +11,12 @@ const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', displ
 export const metadata: Metadata = {
   title: 'ContrataData — Contratos Públicos de Colombia',
   description: 'Consulta y visualiza contratos del Estado colombiano extraídos de SECOP II. Datos de entidades públicas, contratistas y valores actualizados diariamente.',
-  metadataBase: new URL('https://contratadata.online'),
+  metadataBase: new URL('https://contratadata.xyz'),
   icons: { icon: '/favicon.svg' },
   openGraph: {
     title: 'ContrataData — Contratos Públicos de Colombia',
     description: 'Plataforma de transparencia: explora contratos del Estado colombiano por entidad, contratista, valor y fecha.',
-    url: 'https://contratadata.online',
+    url: 'https://contratadata.xyz',
     siteName: 'ContrataData',
     locale: 'es_CO',
     type: 'website',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     description: 'Explora contratos del Estado colombiano de SECOP II. Actualizado diariamente.',
   },
   alternates: {
-    canonical: 'https://contratadata.online',
+    canonical: 'https://contratadata.xyz',
   },
 }
 

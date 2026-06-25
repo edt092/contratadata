@@ -2,7 +2,7 @@
 
 Plataforma de datos abiertos que consolida, normaliza y visualiza contratos públicos del Estado colombiano extraídos de SECOP II y datos.gov.co.
 
-**Live:** [contratadata.online](https://contratadata.online)
+**Live:** [contratadata.xyz](https://contratadata.xyz)
 
 ---
 
