@@ -26,7 +26,7 @@ export default function TopEntidadesChart({ items, onItemClick }: Props) {
       </div>
       <BarList
         data={data}
-        valueFormatter={v => fmtAbbr(v)}
+        valueFormatter={(v: number) => fmtAbbr(v)}
         onValueChange={onItemClick ? item => onItemClick(item.name) : undefined}
         color="blue"
         className="mt-2"

@@ -27,7 +27,7 @@ export default function EvolucionChart({ data }: Props) {
         index="periodo"
         categories={['Valor COP']}
         colors={['blue']}
-        valueFormatter={v => fmtAbbr(v)}
+        valueFormatter={(v: number) => fmtAbbr(v)}
         showAnimation
         showLegend={false}
         showGradient

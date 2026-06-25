@@ -130,7 +130,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
             ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
             : <BarList
                 data={topConData}
-                valueFormatter={v => fmtAbbr(v)}
+                valueFormatter={(v: number) => fmtAbbr(v)}
                 onValueChange={item => router.push(`/contratista/${encodeURIComponent(item.name)}`)}
                 color="blue"
               />
@@ -146,7 +146,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
                 index="periodo"
                 categories={['Valor COP']}
                 colors={['blue']}
-                valueFormatter={v => fmtAbbr(v)}
+                valueFormatter={(v: number) => fmtAbbr(v)}
                 showLegend={false}
                 showAnimation
                 showGradient

@@ -139,7 +139,7 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
             ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
             : <BarList
                 data={topEntData}
-                valueFormatter={v => fmtAbbr(v)}
+                valueFormatter={(v: number) => fmtAbbr(v)}
                 onValueChange={item => router.push(`/entidad/${encodeURIComponent(item.name)}`)}
                 color="blue"
               />
