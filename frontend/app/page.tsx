@@ -25,7 +25,7 @@ function toTableRow(c: ContractItem, router: ReturnType<typeof useRouter>): Tabl
     entidad: c.entidad,
     contratista: c.contratista,
     valorFmt: fmtCOP(c.valor),
-    estado: c.estado,
+    estado: c.estado ?? '',
     estadoFg: es.fg,
     estadoBg: es.bg,
     fuente: c.fuente,
