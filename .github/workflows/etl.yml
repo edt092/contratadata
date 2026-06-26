@@ -9,6 +9,10 @@ on:
         description: 'Cargar desde fecha (YYYY-MM-DD). Vacío = incremental automático.'
         required: false
         default: ''
+      max_records:
+        description: 'Límite de registros (0 = sin límite)'
+        required: false
+        default: '0'
       force_full:
         description: 'Forzar recarga completa (1 = sí)'
         required: false
@@ -17,7 +21,7 @@ on:
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 360   # máximo permitido por GitHub Actions
+    timeout-minutes: 360
 
     steps:
       - uses: actions/checkout@v4
@@ -36,4 +40,6 @@ jobs:
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
           LOG_LEVEL: INFO
           DATE_FROM: ${{ github.event.inputs.date_from }}
+          MAX_RECORDS: ${{ github.event.inputs.max_records }}
           FORCE_FULL_LOAD: ${{ github.event.inputs.force_full }}
+          PAGE_DELAY: '0.3'

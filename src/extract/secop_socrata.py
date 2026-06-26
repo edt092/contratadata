@@ -26,7 +26,7 @@ PAGE_SIZE = 1000
 MAX_RETRIES = 3
 BACKOFF_SECONDS = 5
 REQUEST_TIMEOUT = 60
-PAGE_DELAY = 1.5  # segundos entre páginas para no saturar el servidor
+PAGE_DELAY = float(os.getenv("PAGE_DELAY", "0.3"))  # configurable vía env
 
 
 class SecopSocrataExtractor(BaseExtractor):
