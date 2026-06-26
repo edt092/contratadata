@@ -3,12 +3,21 @@ name: ETL Pipeline — ContrataData
 on:
   schedule:
     - cron: '0 8 * * *'   # 3 AM Colombia (UTC-5) = 8 AM UTC
-  workflow_dispatch:        # permite lanzar manualmente desde GitHub
+  workflow_dispatch:
+    inputs:
+      date_from:
+        description: 'Cargar desde fecha (YYYY-MM-DD). Vacío = incremental automático.'
+        required: false
+        default: ''
+      force_full:
+        description: 'Forzar recarga completa (1 = sí)'
+        required: false
+        default: ''
 
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 360   # máximo permitido por GitHub Actions
 
     steps:
       - uses: actions/checkout@v4
@@ -26,3 +35,5 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
           LOG_LEVEL: INFO
+          DATE_FROM: ${{ github.event.inputs.date_from }}
+          FORCE_FULL_LOAD: ${{ github.event.inputs.force_full }}
