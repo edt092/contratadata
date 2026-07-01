@@ -7,6 +7,7 @@ de modo que una caída parcial no pierde el progreso ya guardado.
 
 import logging
 import os
+import sys
 from collections import Counter
 from datetime import datetime, timezone
 from itertools import islice
@@ -28,6 +29,42 @@ def _iter_chunks(iterable, size: int):
     it = iter(iterable)
     while chunk := list(islice(it, size)):
         yield chunk
+
+
+def _write_github_summary(
+    *,
+    modo: str,
+    total_extraidos: int,
+    total_insertados: int,
+    total_duplicados: int,
+    total_rechazados: int,
+    lotes_fallidos: int,
+    lote_num: int,
+    motivos_global: Counter,
+) -> None:
+    summary_path = os.getenv("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    estado = "✅ OK" if lotes_fallidos == 0 else f"⚠️ {lotes_fallidos}/{lote_num} lotes fallidos"
+    lines = [
+        "## ContrataData ETL — Resumen\n\n",
+        f"| Campo | Valor |\n|---|---|\n",
+        f"| Modo | `{modo}` |\n",
+        f"| Estado carga | {estado} |\n",
+        f"| Registros extraídos | {total_extraidos:,} |\n",
+        f"| Insertados | {total_insertados:,} |\n",
+        f"| Duplicados (skip) | {total_duplicados:,} |\n",
+        f"| Rechazados | {total_rechazados:,} |\n",
+    ]
+    if motivos_global:
+        lines.append("\n### Motivos de rechazo\n\n")
+        for motivo, n in motivos_global.most_common(10):
+            lines.append(f"- `{motivo}`: {n:,}\n")
+    try:
+        with open(summary_path, "a", encoding="utf-8") as fh:
+            fh.writelines(lines)
+    except OSError as exc:
+        logger.warning("No se pudo escribir GITHUB_STEP_SUMMARY: %s", exc)
 
 
 def run() -> None:
@@ -75,6 +112,7 @@ def run() -> None:
         total_extraidos = total_insertados = total_duplicados = total_rechazados = 0
         motivos_global: Counter = Counter()
         lote_num = 0
+        lotes_fallidos = 0
 
         for chunk in _iter_chunks(extractor.extract(), BATCH_SIZE):
             lote_num += 1
@@ -96,6 +134,7 @@ def run() -> None:
                     entity_cache, supplier_cache,
                 )
             except Exception as exc:
+                lotes_fallidos += 1
                 msg = f"Lote {lote_num} (offset ~{total_extraidos}): {type(exc).__name__}: {exc}"
                 err.log("Carga — Error de lote", msg)
                 logger.error("Error en lote %d, continuando con el siguiente. %s", lote_num, exc)
@@ -113,8 +152,8 @@ def run() -> None:
         # Resumen final
         logger.info(
             "=== Pipeline finalizado === extraídos: %d | insertados: %d | "
-            "duplicados: %d | rechazados: %d",
-            total_extraidos, total_insertados, total_duplicados, total_rechazados,
+            "duplicados: %d | rechazados: %d | lotes_fallidos: %d",
+            total_extraidos, total_insertados, total_duplicados, total_rechazados, lotes_fallidos,
         )
 
         if motivos_global:
@@ -124,10 +163,40 @@ def run() -> None:
                 f"{total_rechazados} registros rechazados — {resumen}",
             )
 
+        # Escribir Job Summary para GitHub Actions (visible directo en la UI)
+        _write_github_summary(
+            modo=modo,
+            total_extraidos=total_extraidos,
+            total_insertados=total_insertados,
+            total_duplicados=total_duplicados,
+            total_rechazados=total_rechazados,
+            lotes_fallidos=lotes_fallidos,
+            lote_num=lote_num,
+            motivos_global=motivos_global,
+        )
+
+        # Falla explícita si todos los lotes con datos fallaron al cargar
+        if lote_num > 0 and lotes_fallidos == lote_num:
+            raise RuntimeError(
+                f"Todos los lotes fallaron al cargar ({lotes_fallidos}/{lote_num}). "
+                "Revisa la conexión a la base de datos y los logs anteriores."
+            )
+
         # Marcar corrida exitosa para la próxima ejecución incremental
         set_last_run_at(engine, run_started_at)
         logger.info("Timestamp de corrida guardado: %s", run_started_at.isoformat())
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except Exception as exc:
+        logger.critical("Pipeline terminó con error fatal: %s: %s", type(exc).__name__, exc)
+        summary_path = os.getenv("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            try:
+                with open(summary_path, "a", encoding="utf-8") as fh:
+                    fh.write(f"\n## ❌ Error fatal\n\n```\n{type(exc).__name__}: {exc}\n```\n")
+            except OSError:
+                pass
+        sys.exit(1)

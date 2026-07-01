@@ -34,7 +34,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Ejecutar pipeline ETL
-        run: python pipeline.py
+        run: python -u pipeline.py
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
@@ -43,3 +43,11 @@ jobs:
           MAX_RECORDS: ${{ github.event.inputs.max_records }}
           FORCE_FULL_LOAD: ${{ github.event.inputs.force_full }}
           PAGE_DELAY: '0.3'
+          PYTHONFAULTHANDLER: '1'
+
+      - name: Diagnóstico si falló
+        if: failure()
+        run: |
+          echo "### Secrets configurados" >> $GITHUB_STEP_SUMMARY
+          echo "- DATABASE_URL: $( [ -n '${{ secrets.DATABASE_URL }}' ] && echo '✅ presente' || echo '❌ VACÍO' )" >> $GITHUB_STEP_SUMMARY
+          echo "- SOCRATA_APP_TOKEN: $( [ -n '${{ secrets.SOCRATA_APP_TOKEN }}' ] && echo '✅ presente' || echo '❌ VACÍO' )" >> $GITHUB_STEP_SUMMARY
