@@ -89,6 +89,8 @@ FORCE_FULL_LOAD=1 python pipeline.py
 
 La primera ejecución descarga todos los registros disponibles y guarda un timestamp en `pipeline_meta`. Las corridas siguientes filtran la API de Socrata con `$where=:updated_at >= '<last_run>'`, extrayendo solo contratos nuevos o modificados desde entonces.
 
+La carga es un upsert real: cada contrato se identifica por `(fuente, proceso_de_compra)` — el id de proceso de SECOP, no una combinación de campos de negocio — así que si Socrata reporta un cambio de `estado` o `valor` sobre un contrato ya cargado, la fila se actualiza en vez de insertarse duplicada o ignorarse.
+
 En producción el pipeline corre automáticamente cada día a las 3 AM (Colombia) vía GitHub Actions.
 
 ---

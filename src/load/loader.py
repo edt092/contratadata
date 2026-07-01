@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, literal_column, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -90,8 +90,8 @@ def load_batch(
     entity_cache: dict,
     supplier_cache: dict,
 ) -> tuple[int, int]:
-    """Carga un lote en su propia transacción. Retorna (insertados, omitidos)."""
-    inserted = skipped = 0
+    """Carga un lote en su propia transacción. Retorna (insertados, actualizados)."""
+    inserted = updated = 0
 
     with Session(engine) as session:
         with session.begin():
@@ -114,17 +114,30 @@ def load_batch(
                         fecha=_parse_date(rec.get("fecha")),
                         estado=rec.get("estado"),
                         fuente=rec.get("fuente", "UNKNOWN"),
+                        proceso_de_compra=rec["proceso_de_compra"],
                     )
-                    .on_conflict_do_nothing(constraint="uq_contract_idempotent")
+                    .on_conflict_do_update(
+                        constraint="uq_contract_idempotent",
+                        set_={
+                            "entity_id": entity_id,
+                            "supplier_id": supplier_id,
+                            "valor": Decimal(str(rec["valor"])),
+                            "fecha": _parse_date(rec.get("fecha")),
+                            "estado": rec.get("estado"),
+                        },
+                    )
+                    # xmax = 0 en la fila devuelta indica que fue un INSERT;
+                    # cualquier otro valor indica que existía y fue un UPDATE.
+                    .returning(Contract.id, literal_column("(xmax = 0)").label("fue_insertado"))
                 )
-                if session.execute(stmt).rowcount:
+                if session.execute(stmt).one().fue_insertado:
                     inserted += 1
                 else:
-                    skipped += 1
+                    updated += 1
 
             _persist_rejected(session, rejected)
 
-    return inserted, skipped
+    return inserted, updated
 
 
 def get_last_run_at(engine) -> datetime | None:
@@ -153,8 +166,8 @@ def run_load(database_url: str, valid: list[dict], rejected: list[dict]) -> None
     """Compatibilidad hacia atrás: carga todo en un único lote."""
     engine = get_engine(database_url)
     create_tables(engine)
-    inserted, skipped = load_batch(engine, valid, rejected, {}, {})
+    inserted, updated = load_batch(engine, valid, rejected, {}, {})
     logger.info(
-        "Transacción completada: %d contratos nuevos, %d duplicados, %d rechazos.",
-        inserted, skipped, len(rejected),
+        "Transacción completada: %d contratos nuevos, %d actualizados, %d rechazos.",
+        inserted, updated, len(rejected),
     )

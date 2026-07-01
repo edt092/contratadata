@@ -24,6 +24,13 @@ logger = logging.getLogger("pipeline")
 
 BATCH_SIZE = 5_000
 
+# Guarda contra cambios de estructura en el feed de Socrata: si un lote
+# suficientemente grande se rechaza casi por completo, lo más probable es
+# que una columna fuente (ej. proceso_de_compra, nombre_entidad) llegó vacía
+# para todos los registros — no un problema de calidad de datos puntual.
+REJECTION_RATE_THRESHOLD = 0.8
+MIN_BATCH_FOR_SCHEMA_GUARD = 50
+
 
 def _iter_chunks(iterable, size: int):
     it = iter(iterable)
@@ -36,7 +43,7 @@ def _write_github_summary(
     modo: str,
     total_extraidos: int,
     total_insertados: int,
-    total_duplicados: int,
+    total_actualizados: int,
     total_rechazados: int,
     lotes_fallidos: int,
     lote_num: int,
@@ -52,8 +59,8 @@ def _write_github_summary(
         f"| Modo | `{modo}` |\n",
         f"| Estado carga | {estado} |\n",
         f"| Registros extraídos | {total_extraidos:,} |\n",
-        f"| Insertados | {total_insertados:,} |\n",
-        f"| Duplicados (skip) | {total_duplicados:,} |\n",
+        f"| Insertados (nuevos) | {total_insertados:,} |\n",
+        f"| Actualizados (ya existían) | {total_actualizados:,} |\n",
         f"| Rechazados | {total_rechazados:,} |\n",
     ]
     if motivos_global:
@@ -109,7 +116,7 @@ def run() -> None:
         entity_cache: dict = {}
         supplier_cache: dict = {}
 
-        total_extraidos = total_insertados = total_duplicados = total_rechazados = 0
+        total_extraidos = total_insertados = total_actualizados = total_rechazados = 0
         motivos_global: Counter = Counter()
         lote_num = 0
         lotes_fallidos = 0
@@ -127,9 +134,27 @@ def run() -> None:
                 motivos_global[rec.get("_motivo_rechazo", "desconocido")] += 1
             total_rechazados += len(result.rejected)
 
+            # Si casi todo el lote se rechaza, probablemente el feed cambió de
+            # estructura (columna renombrada/vacía) — abortar en vez de seguir
+            # cargando lotes vacíos durante horas sin que nadie se entere.
+            if len(chunk) >= MIN_BATCH_FOR_SCHEMA_GUARD:
+                rejection_rate = len(result.rejected) / len(chunk)
+                if rejection_rate > REJECTION_RATE_THRESHOLD:
+                    motivos_lote = Counter(
+                        r.get("_motivo_rechazo", "desconocido") for r in result.rejected
+                    )
+                    resumen = ", ".join(f"{m}: {n}" for m, n in motivos_lote.most_common(3))
+                    msg = (
+                        f"Lote {lote_num}: {rejection_rate:.0%} de rechazo "
+                        f"({len(result.rejected)}/{len(chunk)}). Posible cambio de "
+                        f"estructura en el feed de Socrata. Motivos principales: {resumen}"
+                    )
+                    err.log("Validación — Posible cambio de esquema", msg)
+                    raise RuntimeError(msg)
+
             # Cargar lote con su propio commit
             try:
-                inserted, skipped = load_batch(
+                inserted, updated = load_batch(
                     engine, result.valid, result.rejected,
                     entity_cache, supplier_cache,
                 )
@@ -141,7 +166,7 @@ def run() -> None:
                 continue
 
             total_insertados += inserted
-            total_duplicados += skipped
+            total_actualizados += updated
 
             if lote_num % 10 == 0:
                 logger.info(
@@ -152,8 +177,8 @@ def run() -> None:
         # Resumen final
         logger.info(
             "=== Pipeline finalizado === extraídos: %d | insertados: %d | "
-            "duplicados: %d | rechazados: %d | lotes_fallidos: %d",
-            total_extraidos, total_insertados, total_duplicados, total_rechazados, lotes_fallidos,
+            "actualizados: %d | rechazados: %d | lotes_fallidos: %d",
+            total_extraidos, total_insertados, total_actualizados, total_rechazados, lotes_fallidos,
         )
 
         if motivos_global:
@@ -168,7 +193,7 @@ def run() -> None:
             modo=modo,
             total_extraidos=total_extraidos,
             total_insertados=total_insertados,
-            total_duplicados=total_duplicados,
+            total_actualizados=total_actualizados,
             total_rechazados=total_rechazados,
             lotes_fallidos=lotes_fallidos,
             lote_num=lote_num,

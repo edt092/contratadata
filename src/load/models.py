@@ -46,19 +46,23 @@ class Supplier(Base):
 class Contract(Base):
     __tablename__ = "contracts"
     __table_args__ = (
-        UniqueConstraint("fuente", "entity_id", "supplier_id", "valor", "fecha",
-                         name="uq_contract_idempotent"),
+        # Clave natural real del contrato (id de proceso SECOP), no una combinación
+        # de campos de negocio: permite detectar altas Y actualizaciones de estado.
+        # Nullable a nivel de columna porque filas cargadas antes de este cambio
+        # no tienen proceso_de_compra; NULL no colisiona consigo mismo en Postgres.
+        UniqueConstraint("fuente", "proceso_de_compra", name="uq_contract_idempotent"),
         CheckConstraint("valor > 0", name="ck_valor_positivo"),
     )
 
-    id          = Column(Integer, primary_key=True, autoincrement=True)
-    entity_id   = Column(Integer, ForeignKey("entities.id"), nullable=False)
-    supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
-    valor       = Column(Numeric(18, 2), nullable=False)
-    fecha       = Column(Date, nullable=False)
-    estado      = Column(String(100))
-    fuente      = Column(String(100), nullable=False)
-    extraido_en = Column(DateTime, nullable=False, default=func.now())
+    id                = Column(Integer, primary_key=True, autoincrement=True)
+    entity_id         = Column(Integer, ForeignKey("entities.id"), nullable=False)
+    supplier_id       = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
+    valor             = Column(Numeric(18, 2), nullable=False)
+    fecha             = Column(Date, nullable=False)
+    estado            = Column(String(100))
+    fuente            = Column(String(100), nullable=False)
+    proceso_de_compra = Column(String(150))
+    extraido_en       = Column(DateTime, nullable=False, default=func.now())
 
     entity   = relationship("Entity", back_populates="contracts")
     supplier = relationship("Supplier", back_populates="contracts")

@@ -49,10 +49,17 @@ def _rule_entidad_presente(record: dict) -> str | None:
     return None
 
 
+def _rule_proceso_de_compra_presente(record: dict) -> str | None:
+    if not record.get("proceso_de_compra"):
+        return "proceso_de_compra_vacio"
+    return None
+
+
 RULES: list[RuleFunc] = [
     _rule_valor_positivo,
     _rule_fecha_valida,
     _rule_entidad_presente,
+    _rule_proceso_de_compra_presente,
 ]
 
 

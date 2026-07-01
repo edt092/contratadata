@@ -43,6 +43,7 @@ def _make_valid_record(**overrides) -> dict:
         "fecha": "2024-01-15T00:00:00.000",
         "estado": "En ejecución",
         "fuente": "SECOP_SOCRATA",
+        "proceso_de_compra": "CO1.PCCNTR.2024099",
         "_raw": {},
     }
     base.update(overrides)
@@ -84,6 +85,12 @@ def test_entidad_no_resoluble_es_rechazada():
     rec = _make_valid_record(entidad_canonica=None)
     result = validate_records([rec])
     assert result.rejected[0]["_motivo_rechazo"] == "entidad_vacia"
+
+
+def test_proceso_de_compra_vacio_es_rechazado():
+    rec = _make_valid_record(proceso_de_compra="")
+    result = validate_records([rec])
+    assert result.rejected[0]["_motivo_rechazo"] == "proceso_de_compra_vacio"
 
 
 def test_mixed_batch(sample_raw_records):

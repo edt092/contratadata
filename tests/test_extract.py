@@ -6,7 +6,7 @@ import pathlib
 import pytest
 import responses as rsps_lib
 
-from src.extract.secop_socrata import ENDPOINT, SecopSocrataExtractor
+from src.extract.secop_socrata import ENDPOINT, SecopExtractionError, SecopSocrataExtractor
 
 
 FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "sample_secop_response.json"
@@ -50,9 +50,21 @@ def test_extract_respects_max_records():
 
 @rsps_lib.activate
 def test_extract_handles_http_error(caplog):
+    """Agotar los reintentos debe fallar de forma explícita, no terminar en silencio."""
     rsps_lib.add(rsps_lib.GET, ENDPOINT, status=503)
     rsps_lib.add(rsps_lib.GET, ENDPOINT, status=503)
     rsps_lib.add(rsps_lib.GET, ENDPOINT, status=503)
 
+    with pytest.raises(SecopExtractionError):
+        list(SecopSocrataExtractor().extract())
+
+
+@rsps_lib.activate
+def test_extract_empty_final_page_ends_pagination_without_error():
+    """Una página vacía con 200 OK es fin de resultados, no un fallo."""
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    rsps_lib.add(rsps_lib.GET, ENDPOINT, json=payload, status=200)
+    rsps_lib.add(rsps_lib.GET, ENDPOINT, json=[], status=200)
+
     records = list(SecopSocrataExtractor().extract())
-    assert records == []
+    assert len(records) == len(payload)

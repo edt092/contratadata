@@ -29,6 +29,16 @@ REQUEST_TIMEOUT = 60
 PAGE_DELAY = float(os.getenv("PAGE_DELAY", "0.3"))  # configurable vía env
 
 
+class SecopExtractionError(RuntimeError):
+    """Se agotaron los reintentos contra la API de Socrata.
+
+    Se lanza en vez de devolver una página vacía para que un caído total
+    del feed no se confunda con "no hay más páginas" y el pipeline falle
+    de forma explícita en lugar de terminar silenciosamente con pocos
+    registros.
+    """
+
+
 class SecopSocrataExtractor(BaseExtractor):
     SOURCE_NAME = "SECOP_SOCRATA"
 
@@ -100,7 +110,7 @@ class SecopSocrataExtractor(BaseExtractor):
         logger.error(msg)
         if self._error_log:
             self._error_log.log("Extracción — API", msg)
-        return []
+        raise SecopExtractionError(msg) from last_exc
 
     def extract(self) -> Iterator[dict]:
         offset = 0
@@ -139,6 +149,7 @@ class SecopSocrataExtractor(BaseExtractor):
             "fecha": raw.get("fecha_de_firma"),
             "estado": (raw.get("estado_contrato") or "").strip(),
             "identificacion_proveedor": (raw.get("documento_proveedor") or "").strip(),
+            "proceso_de_compra": (raw.get("proceso_de_compra") or "").strip(),
             "fuente": SecopSocrataExtractor.SOURCE_NAME,
             "_raw": raw,  # payload original para rejected_records
         }
