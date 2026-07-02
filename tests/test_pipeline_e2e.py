@@ -31,7 +31,7 @@ def test_pipeline_loads_valid_records(engine, sample_raw_records):
     from sqlalchemy import select, func
     from src.transform.normalize import normalize_record
     from src.transform.validate import validate_records
-    from src.load.loader import load_valid
+    from src.load.loader import load_batch
     from src.load.models import Contract
 
     normalized = [normalize_record(r) for r in sample_raw_records]
@@ -39,10 +39,8 @@ def test_pipeline_loads_valid_records(engine, sample_raw_records):
 
     assert len(result.valid) > 0, "No hay registros válidos en el fixture."
 
-    with Session(engine) as session:
-        with session.begin():
-            inserted, _ = load_valid(session, result.valid)
-            assert inserted >= 0  # puede ser 0 si ya existían (idempotencia)
+    inserted, _ = load_batch(engine, result.valid, [], {}, {})
+    assert inserted >= 0  # puede ser 0 si ya existían (idempotencia)
 
     # Verificar que las tablas tienen datos
     with Session(engine) as session:
@@ -56,22 +54,18 @@ def test_pipeline_idempotent(engine, sample_raw_records):
     from sqlalchemy import select, func
     from src.transform.normalize import normalize_record
     from src.transform.validate import validate_records
-    from src.load.loader import load_valid
+    from src.load.loader import load_batch
     from src.load.models import Contract
 
     normalized = [normalize_record(r) for r in sample_raw_records]
     result = validate_records(normalized)
 
-    with Session(engine) as session:
-        with session.begin():
-            load_valid(session, result.valid)
+    load_batch(engine, result.valid, [], {}, {})
 
     with Session(engine) as session:
         count_after_first = session.scalar(select(func.count()).select_from(Contract))
 
-    with Session(engine) as session:
-        with session.begin():
-            load_valid(session, result.valid)
+    load_batch(engine, result.valid, [], {}, {})
 
     with Session(engine) as session:
         count_after_second = session.scalar(select(func.count()).select_from(Contract))

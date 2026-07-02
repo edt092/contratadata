@@ -49,8 +49,13 @@ def test_extract_respects_max_records():
 
 
 @rsps_lib.activate
-def test_extract_handles_http_error(caplog):
+def test_extract_handles_http_error(caplog, monkeypatch):
     """Agotar los reintentos debe fallar de forma explícita, no terminar en silencio."""
+    import src.extract.secop_socrata as secop_module
+
+    monkeypatch.setattr(secop_module, "MAX_RETRIES", 3)
+    monkeypatch.setattr(secop_module.time, "sleep", lambda *_: None)
+
     rsps_lib.add(rsps_lib.GET, ENDPOINT, status=503)
     rsps_lib.add(rsps_lib.GET, ENDPOINT, status=503)
     rsps_lib.add(rsps_lib.GET, ENDPOINT, status=503)

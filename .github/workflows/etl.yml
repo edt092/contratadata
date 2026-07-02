@@ -18,6 +18,10 @@ on:
         required: false
         default: ''
 
+concurrency:
+  group: contratadata-etl
+  cancel-in-progress: false
+
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest

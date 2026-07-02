@@ -31,6 +31,12 @@ class Entity(Base):
 
 class Supplier(Base):
     __tablename__ = "suppliers"
+    __table_args__ = (
+        # Requerido para el INSERT ... ON CONFLICT DO NOTHING masivo en
+        # load_batch (src/load/loader.py). En bases existentes hay que
+        # correr migrate_supplier_unique.py antes de desplegar este cambio.
+        UniqueConstraint("nombre", name="uq_supplier_nombre"),
+    )
 
     id              = Column(Integer, primary_key=True, autoincrement=True)
     nombre          = Column(String(500), nullable=False)

@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import islice
 
 from dotenv import load_dotenv
@@ -24,6 +24,12 @@ logger = logging.getLogger("pipeline")
 
 BATCH_SIZE = 5_000
 
+# Solape del cursor incremental: al reanudar desde last_processed_updated_at
+# retrocedemos unos minutos para no perder registros por pequeños desórdenes
+# de :updated_at en el feed. El upsert es idempotente, así que reprocesar
+# unos pocos registros de más no duplica nada.
+CURSOR_OVERLAP_MINUTES = 10
+
 # Guarda contra cambios de estructura en el feed de Socrata: si un lote
 # suficientemente grande se rechaza casi por completo, lo más probable es
 # que una columna fuente (ej. proceso_de_compra, nombre_entidad) llegó vacía
@@ -36,6 +42,23 @@ def _iter_chunks(iterable, size: int):
     it = iter(iterable)
     while chunk := list(islice(it, size)):
         yield chunk
+
+
+def _parse_updated_at(raw) -> datetime | None:
+    if not raw:
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(str(raw)[:19], fmt[:len(fmt)])
+        except ValueError:
+            continue
+    return None
+
+
+def _max_updated_at(records: list[dict]) -> datetime | None:
+    parsed = [_parse_updated_at(r.get("_updated_at")) for r in records]
+    parsed = [d for d in parsed if d is not None]
+    return max(parsed) if parsed else None
 
 
 def _write_github_summary(
@@ -79,7 +102,11 @@ def run() -> None:
     from src.extract.secop_socrata import SecopSocrataExtractor
     from src.transform.normalize import normalize_record
     from src.transform.validate import validate_records
-    from src.load.loader import get_engine, create_tables, load_batch, get_last_run_at, set_last_run_at
+    from src.load.loader import (
+        get_engine, create_tables, load_batch,
+        get_last_run_at, set_last_run_at,
+        get_last_processed_updated_at, set_last_processed_updated_at,
+    )
 
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
@@ -90,16 +117,26 @@ def run() -> None:
     engine = get_engine(database_url)
     create_tables(engine)
 
-    # Determinar modo: incremental (last_run_at en DB) o completo
+    # Determinar modo: incremental o completo. El cursor por ventana
+    # (last_processed_updated_at, que avanza por lote exitoso) tiene
+    # prioridad sobre last_run_at (que solo se guarda al final de una
+    # corrida completa) porque refleja mejor de dónde retomar tras una
+    # corrida cancelada a mitad de camino.
     last_run_at = get_last_run_at(engine)
+    last_processed_updated_at = get_last_processed_updated_at(engine)
+    cursor = last_processed_updated_at or last_run_at
     force_full = os.getenv("FORCE_FULL_LOAD", "").lower() in ("1", "true", "yes")
 
-    if force_full or last_run_at is None:
+    if force_full or cursor is None:
         since = None
-        modo = "COMPLETO" if last_run_at is None else "COMPLETO (forzado)"
+        modo = "COMPLETO" if cursor is None else "COMPLETO (forzado)"
     else:
-        since = last_run_at
-        modo = f"INCREMENTAL desde {last_run_at.isoformat()}"
+        since = cursor
+        modo = f"INCREMENTAL desde {cursor.isoformat()}"
+
+    # Cota superior del cursor a lo largo de la corrida (independiente de
+    # 'since', que no cambia durante la corrida).
+    running_max_updated_at: datetime | None = None
 
     logger.info("=== Iniciando pipeline ContrataData — modo %s (lotes de %d) ===", modo, BATCH_SIZE)
 
@@ -128,6 +165,7 @@ def run() -> None:
             # Normalizar y validar el lote
             normalized = [normalize_record(r) for r in chunk]
             result = validate_records(normalized)
+            batch_max_updated_at = _max_updated_at(normalized)
 
             # Contabilizar rechazos
             for rec in result.rejected:
@@ -167,6 +205,17 @@ def run() -> None:
 
             total_insertados += inserted
             total_actualizados += updated
+
+            # Avanzar y persistir el cursor incremental tras cada lote exitoso
+            # (con solape) — si Actions cancela la corrida, la próxima retoma
+            # desde aquí en vez de repetir todo el incremental desde el inicio.
+            if batch_max_updated_at and (
+                running_max_updated_at is None or batch_max_updated_at > running_max_updated_at
+            ):
+                running_max_updated_at = batch_max_updated_at
+                set_last_processed_updated_at(
+                    engine, running_max_updated_at - timedelta(minutes=CURSOR_OVERLAP_MINUTES)
+                )
 
             if lote_num % 10 == 0:
                 logger.info(
