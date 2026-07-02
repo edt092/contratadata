@@ -88,7 +88,7 @@ def contracts_aggregate(
     )
 
 
-@router.get("/", response_model=ContractListResponse)
+@router.get("", response_model=ContractListResponse)
 def list_contracts(
     entidad: Optional[str] = Query(None, description="Nombre exacto de la entidad"),
     contratista: Optional[str] = Query(None, description="Búsqueda parcial en nombre del contratista"),

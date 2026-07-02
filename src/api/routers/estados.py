@@ -10,7 +10,7 @@ from src.load.models import Contract
 router = APIRouter(prefix="/estados", tags=["estados"])
 
 
-@router.get("/", response_model=list[str])
+@router.get("", response_model=list[str])
 def list_estados(db: Session = Depends(get_db)) -> list[str]:
     rows = db.execute(
         select(Contract.estado)

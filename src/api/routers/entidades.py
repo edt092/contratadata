@@ -13,7 +13,7 @@ from src.load.models import Contract, Entity, Supplier
 router = APIRouter(prefix="/entidades", tags=["entidades"])
 
 
-@router.get("/", response_model=list[str])
+@router.get("", response_model=list[str])
 def list_entidades(db: Session = Depends(get_db)) -> list[str]:
     """Nombres de todas las entidades (para el select de filtros)."""
     rows = db.execute(
