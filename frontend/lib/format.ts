@@ -16,12 +16,26 @@ export const hexA = (h: string, a: number): string => {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
 }
 
+// Valores reales de contracts.estado en SECOP (ver `SELECT DISTINCT estado
+// FROM contracts`) — no son Activo/Liquidado/Terminado como se asumía antes,
+// por lo que casi todo caía en el color por defecto. Mismo mapeo que
+// ESTADO_COLORS en src/api/chart_render.py, para que el color de un estado
+// signifique lo mismo en los badges interactivos y en las gráficas estáticas
+// de seaborn. Orden fijo, nunca ciclado.
 export const estadoStyle = (e: string | null | undefined) => {
   const map: Record<string, string> = {
-    Activo: '#10B981',
-    Liquidado: '#94A3B8',
-    Terminado: '#6366F1',
-    Suspendido: '#F59E0B',
+    'En ejecución': '#3B82F6',
+    'Cerrado': '#94A3B8',
+    'Modificado': '#6366F1',
+    'terminado': '#64748B',
+    'Aprobado': '#10B981',
+    'cedido': '#F59E0B',
+    'Suspendido': '#EF4444',
+    'Borrador': '#CBD5E1',
+    'Prorrogado': '#14B8A6',
+    'En aprobación': '#0EA5E9',
+    'Cancelado': '#DC2626',
+    'enviado Proveedor': '#A855F7',
   }
   const c = map[e ?? ''] ?? '#94A3B8'
   return { fg: c, bg: hexA(c, 0.15) }
