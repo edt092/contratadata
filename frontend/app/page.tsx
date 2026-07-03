@@ -91,11 +91,6 @@ export default function DashboardPage() {
     queryFn: () => api.topEntidades(filters),
     enabled: chartTab === 'entidades',
   })
-  const evolQ = useQuery({
-    queryKey: ['evolucion', filters],
-    queryFn: () => api.evolucion(filters),
-    enabled: chartTab === 'evolucion',
-  })
   const calidadQ = useQuery({
     queryKey: ['pipeline-rejected'],
     queryFn: api.pipelineRejected,
@@ -286,9 +281,13 @@ export default function DashboardPage() {
                 />
           )}
           {chartTab === 'evolucion' && (
-            evolQ.isLoading
-              ? <div style={{ color: 'var(--muted)', fontSize: 14 }}>Cargando gráfica…</div>
-              : <EvolucionChart data={evolQ.data ?? []} />
+            <EvolucionChart
+              theme={theme}
+              entidad={filters.entidad}
+              estado={filters.estado}
+              desde={filters.desde}
+              hasta={filters.hasta}
+            />
           )}
           {chartTab === 'calidad' && (
             calidadQ.isLoading

@@ -1,38 +1,23 @@
 'use client'
 
-import { AreaChart } from '@tremor/react'
-import { fmtAbbr } from '@/lib/format'
-import type { MonthlyPoint } from '@/lib/api'
+import { api } from '@/lib/api'
+import ChartImage from './ChartImage'
 
 interface Props {
-  data: MonthlyPoint[]
+  theme: 'dark' | 'light'
+  entidad?: string
+  estado?: string
+  desde?: string
+  hasta?: string
 }
 
-export default function EvolucionChart({ data }: Props) {
-  const chartData = data.map(p => ({
-    periodo: p.periodo,
-    'Valor COP': p.valor_total,
-  }))
-
+export default function EvolucionChart({ theme, entidad, estado, desde, hasta }: Props) {
   return (
-    <div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>
-        Evolución temporal del valor contratado
-      </div>
-      <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 20 }}>
-        Valor total de contratos por mes.
-      </div>
-      <AreaChart
-        data={chartData}
-        index="periodo"
-        categories={['Valor COP']}
-        colors={['blue']}
-        valueFormatter={(v: number) => fmtAbbr(v)}
-        showAnimation
-        showLegend={false}
-        showGradient
-        className="h-56 mt-2"
-      />
-    </div>
+    <ChartImage
+      src={api.imageUrl('/charts/images/monthly-evolution.png', { theme, entidad, estado, desde, hasta })}
+      alt="Evolución mensual del valor contratado"
+      title={entidad ? 'Evolución de gasto por mes' : 'Evolución temporal del valor contratado'}
+      subtitle="Valor total por mes, con media móvil de 3 meses para separar la tendencia del ruido."
+    />
   )
 }

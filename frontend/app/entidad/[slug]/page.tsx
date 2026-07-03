@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { BarList, AreaChart } from '@tremor/react'
+import { BarList } from '@tremor/react'
 import { api, type ContractItem } from '@/lib/api'
 import { fmtInt, fmtCOP, fmtAbbr, estadoStyle, fuenteStyle } from '@/lib/format'
 import { useTheme } from '@/lib/theme-context'
@@ -11,6 +11,7 @@ import type { TableRow } from '@/lib/types'
 import EstadoBadge from '@/components/EstadoBadge'
 import FuenteBadge from '@/components/FuenteBadge'
 import ChartImage from '@/components/charts/ChartImage'
+import EvolucionChart from '@/components/charts/EvolucionChart'
 
 function toRow(c: ContractItem, router: ReturnType<typeof useRouter>): TableRow {
   const es = estadoStyle(c.estado)
@@ -54,10 +55,6 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
     queryKey: ['entity-top-contratistas', name],
     queryFn: () => api.entityTopContratistas(name),
   })
-  const evolQ = useQuery({
-    queryKey: ['evolucion', { entidad: name }],
-    queryFn: () => api.evolucion({ entidad: name }),
-  })
 
   const summary = summaryQ.data
   const contracts = contractsQ.data
@@ -66,11 +63,6 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
   const topConData = (topConQ.data ?? []).map(e => ({
     name: e.nombre,
     value: e.valor_total,
-  }))
-
-  const evolData = (evolQ.data ?? []).map(p => ({
-    periodo: p.periodo,
-    'Valor COP': p.valor_total,
   }))
 
   const totalPages = contracts?.total_pages ?? 1
@@ -125,38 +117,23 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
         ))}
       </div>
 
-      {/* Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 26 }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Principales contratistas</div>
-          {topConQ.isLoading
-            ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
-            : <BarList
-                data={topConData}
-                valueFormatter={(v: number) => fmtAbbr(v)}
-                onValueChange={item => router.push(`/contratista/${encodeURIComponent(item.name)}`)}
-                color="blue"
-              />
-          }
-        </div>
+      {/* Principales contratistas */}
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Principales contratistas</div>
+        {topConQ.isLoading
+          ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
+          : <BarList
+              data={topConData}
+              valueFormatter={(v: number) => fmtAbbr(v)}
+              onValueChange={item => router.push(`/contratista/${encodeURIComponent(item.name)}`)}
+              color="blue"
+            />
+        }
+      </div>
 
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Evolución de gasto por mes</div>
-          {evolQ.isLoading
-            ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
-            : <AreaChart
-                data={evolData}
-                index="periodo"
-                categories={['Valor COP']}
-                colors={['blue']}
-                valueFormatter={(v: number) => fmtAbbr(v)}
-                showLegend={false}
-                showAnimation
-                showGradient
-                className="h-44"
-              />
-          }
-        </div>
+      {/* Evolución de gasto por mes */}
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 26 }}>
+        <EvolucionChart theme={theme} entidad={name} />
       </div>
 
       {/* Boxenplot de valores por estado */}

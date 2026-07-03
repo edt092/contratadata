@@ -92,6 +92,106 @@ def monthly_heatmap(
     return safe_render(_render, colors)
 
 
+@router.get("/monthly-evolution.png")
+def monthly_evolution(
+    entidad: Optional[str] = Query(None),
+    estado: Optional[str] = Query(None),
+    desde: Optional[date] = Query(None),
+    hasta: Optional[date] = Query(None),
+    theme: str = Query("dark"),
+    db: Session = Depends(get_db),
+):
+    colors = get_theme(theme)
+
+    entity_id = None
+    if entidad:
+        entity = db.execute(select(Entity).where(Entity.nombre_canonico == entidad)).scalars().first()
+        if not entity:
+            raise HTTPException(status_code=404, detail="Entidad no encontrada")
+        entity_id = entity.id
+
+    def _render():
+        stmt = (
+            select(
+                extract("year", Contract.fecha).label("anio"),
+                extract("month", Contract.fecha).label("mes"),
+                func.sum(Contract.valor).label("valor_total"),
+            )
+            .group_by("anio", "mes")
+            .order_by("anio", "mes")
+        )
+        if entity_id is not None:
+            stmt = stmt.where(Contract.entity_id == entity_id)
+        if estado:
+            stmt = stmt.where(Contract.estado == estado)
+        if desde:
+            stmt = stmt.where(Contract.fecha >= desde)
+        if hasta:
+            stmt = stmt.where(Contract.fecha <= hasta)
+
+        rows = db.execute(stmt).all()
+        if not rows:
+            raise ValueError("sin datos para graficar")
+
+        df = pd.DataFrame(rows, columns=["anio", "mes", "valor_total"])
+        df["fecha_periodo"] = pd.to_datetime(
+            df["anio"].astype(int).astype(str) + "-" + df["mes"].astype(int).astype(str).str.zfill(2) + "-01"
+        )
+        df["valor_total"] = df["valor_total"].astype(float)
+
+        # Rellenar meses sin contratos con $0 en vez de saltarlos: si no, una
+        # entidad con actividad esporádica (ej. un contrato cada varios meses)
+        # se ve como una línea continua entre puntos lejanos en el tiempo,
+        # como si hubiera gasto sostenido entre ellos cuando en realidad no
+        # hubo nada — el eje X debe respetar el tiempo real, no solo el orden
+        # de los meses que sí tienen datos.
+        full_range = pd.date_range(df["fecha_periodo"].min(), df["fecha_periodo"].max(), freq="MS")
+        serie = df.set_index("fecha_periodo")["valor_total"].reindex(full_range, fill_value=0.0)
+        df = pd.DataFrame({"fecha_periodo": full_range, "valor_total": serie.values})
+        df["periodo"] = df["fecha_periodo"].dt.strftime("%Y-%m")
+        # Media móvil de 3 meses: separa la tendencia real del ruido mes a
+        # mes, que es justo lo que un área/línea simple no deja ver bien.
+        df["media_movil_3m"] = df["valor_total"].rolling(3, min_periods=1).mean()
+
+        fig, ax = plt.subplots(figsize=(11, 4.6))
+        x = list(range(len(df)))
+
+        ax.fill_between(x, df["valor_total"], color=colors["primary"], alpha=0.15, linewidth=0)
+        sns.lineplot(
+            x=x, y=df["valor_total"], ax=ax, color=colors["primary"],
+            linewidth=2, marker="o", markersize=4,
+        )
+        if len(df) >= 3:
+            sns.lineplot(
+                x=x, y=df["media_movil_3m"], ax=ax, color=colors["muted"],
+                linewidth=1.4, linestyle="--", label="Media móvil 3 meses",
+            )
+            ax.legend(loc="upper left", frameon=False, labelcolor=colors["muted"], fontsize=9.5)
+
+        titulo = "Evolución mensual del valor contratado"
+        if entidad:
+            titulo += f" — {entidad}"
+        ax.set_title(titulo, fontsize=13, fontweight="bold", pad=14, color=colors["text"])
+        ax.set_xlabel("")
+        ax.set_ylabel("Valor total (COP)")
+        ax.set_ylim(bottom=0)
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _pos: abbr_cop(v)))
+
+        # Con hasta 10+ años de historia mensual, mostrar las ~120 etiquetas
+        # sería ilegible: se muestra un subconjunto espaciado.
+        max_ticks = 18
+        step = max(1, len(df) // max_ticks)
+        tick_positions = x[::step]
+        ax.set_xticks(tick_positions)
+        ax.set_xticklabels(df["periodo"].iloc[::step], rotation=55, ha="right")
+
+        style_figure(fig, [ax], colors)
+
+        return render_png(fig, colors)
+
+    return safe_render(_render, colors)
+
+
 @router.get("/value-distribution.png")
 def value_distribution(
     entidad: Optional[str] = Query(None),
