@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import { ThemeProvider } from '@/lib/theme-context'
 import { QueryProvider } from '@/lib/query-provider'
+import { FeedbackProvider } from '@/lib/feedback-context'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' })
@@ -37,8 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <QueryProvider>
           <ThemeProvider>
-            <Navbar />
-            {children}
+            <FeedbackProvider>
+              <Navbar />
+              {children}
+            </FeedbackProvider>
           </ThemeProvider>
         </QueryProvider>
       </body>

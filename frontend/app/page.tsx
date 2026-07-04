@@ -14,6 +14,7 @@ import TopEntidadesChart from '@/components/charts/TopEntidadesChart'
 import EvolucionChart from '@/components/charts/EvolucionChart'
 import CalidadChart from '@/components/charts/CalidadChart'
 import ChartImage from '@/components/charts/ChartImage'
+import FeedbackBanner from '@/components/FeedbackBanner'
 
 const PER_PAGE = 50
 type ChartTab = 'entidades' | 'evolucion' | 'calidad' | 'calendario' | 'distribucion'
@@ -169,6 +170,8 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      <FeedbackBanner />
 
       {/* Error banner */}
       {hasError && (

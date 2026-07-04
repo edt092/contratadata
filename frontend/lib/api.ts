@@ -16,6 +16,16 @@ async function get<T>(path: string, params?: Record<string, string | number | bo
   return res.json()
 }
 
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`API ${res.status} — ${path}`)
+  return res.json()
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ContractItem {
@@ -117,6 +127,29 @@ export interface PipelineRunItem {
   error_summary: string | null
 }
 
+export type FeedbackType = 'no_encontre' | 'dificil_buscar' | 'error' | 'sugerencia' | 'otro'
+export type FeedbackImportance = 'baja' | 'media' | 'alta'
+
+export interface FeedbackPayload {
+  feedback_type: FeedbackType
+  comment: string
+  email?: string
+  importance: FeedbackImportance
+  consent_contact: boolean
+  page_url?: string
+  route?: string
+  filters_json?: Record<string, string> | null
+  user_agent?: string
+  viewport?: string
+  referrer?: string
+}
+
+export interface FeedbackResponse {
+  id: number
+  status: string
+  reward_status: string
+}
+
 export type Filters = {
   entidad?: string
   contratista?: string
@@ -175,4 +208,7 @@ export const api = {
   // Imágenes seaborn/matplotlib (visualizaciones estáticas analíticas)
   imageUrl: (path: string, params?: Record<string, string | number | boolean | undefined | null>) =>
     buildUrl(path, params),
+
+  // Feedback de usuarios (user testing, sin login)
+  submitFeedback: (payload: FeedbackPayload) => post<FeedbackResponse>('/feedback', payload),
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/lib/theme-context'
+import { useFeedback } from '@/lib/feedback-context'
 
 const NAV = [
   { label: 'Dashboard', href: '/' },
@@ -12,6 +13,7 @@ const NAV = [
 export default function Navbar() {
   const pathname = usePathname()
   const { theme, toggleTheme } = useTheme()
+  const { openFeedback } = useFeedback()
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' || pathname.startsWith('/entidad') || pathname.startsWith('/contratista') : pathname === href
@@ -63,6 +65,23 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+
+          <button
+            onClick={openFeedback}
+            style={{
+              marginLeft: 10,
+              background: 'var(--primary-weak)',
+              border: '1px solid var(--border)',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '7px 11px',
+              borderRadius: 8,
+              color: 'var(--primary)',
+            }}
+          >
+            Feedback
+          </button>
 
           <button
             onClick={toggleTheme}

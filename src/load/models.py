@@ -4,7 +4,7 @@ from datetime import datetime, date
 from decimal import Decimal
 
 from sqlalchemy import (
-    BigInteger, CheckConstraint, Column, Date, DateTime, ForeignKey,
+    BigInteger, Boolean, CheckConstraint, Column, Date, DateTime, ForeignKey,
     Integer, Numeric, String, UniqueConstraint, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -125,6 +125,31 @@ class PipelineBatchError(Base):
     error_type     = Column(String(200))
     error_message  = Column(String(2000))
     created_at     = Column(DateTime, nullable=False, default=func.now())
+
+
+class Feedback(Base):
+    """Feedback de usuarios en fase de user testing — no requiere login."""
+    __tablename__ = "feedback"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    feedback_type   = Column(String(50), nullable=False)
+    comment         = Column(String(4000), nullable=False)
+    email           = Column(String(255))
+    importance      = Column(String(20), nullable=False)
+    consent_contact = Column(Boolean, nullable=False, default=False)
+    page_url        = Column(String(1000))
+    route           = Column(String(500))
+    filters_json    = Column(JSONB)
+    user_agent      = Column(String(500))
+    viewport        = Column(String(50))
+    referrer        = Column(String(1000))
+    status          = Column(String(30), nullable=False, default="new")
+    # 'pending' si dejó email (candidato a créditos premium de la beta), 'none' si no.
+    reward_status   = Column(String(30), nullable=False, default="none")
+    created_at      = Column(DateTime, nullable=False, default=func.now())
+
+    def __repr__(self) -> str:
+        return f"<Feedback id={self.id} type='{self.feedback_type}'>"
 
 
 class RejectedRecord(Base):
