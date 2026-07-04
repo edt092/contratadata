@@ -3,12 +3,14 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from src.api.deps import PremiumRequiredError
 from src.api.routers import (
     alerts, chart_images, charts, competitors, contratistas, contracts,
-    entidades, estados, feedback, pipeline, premium, reports,
+    entidades, estados, feedback, me, pipeline, premium, reports,
 )
 
 load_dotenv()
@@ -38,7 +40,21 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["*"],
+    # Content-Disposition no se expone a JS cross-origin por defecto — el
+    # frontend lo necesita para nombrar el archivo al descargar reportes
+    # (ver frontend/lib/api.ts::authGetBlob).
+    expose_headers=["Content-Disposition"],
 )
+
+
+# ── Errores ──────────────────────────────────────────────────────────────────
+@app.exception_handler(PremiumRequiredError)
+async def premium_required_handler(request: Request, exc: PremiumRequiredError) -> JSONResponse:
+    # Shape plano ({"error": ..., "plan_required": ..., "message": ...}), no
+    # el {"detail": {...}} por defecto de FastAPI — así el frontend lo lee
+    # directo para mostrar el paywall (ver auth.md).
+    return JSONResponse(status_code=exc.status_code, content=exc.detail)
+
 
 # ── Routers ──────────────────────────────────────────────────────────────────
 PREFIX = "/api"
@@ -50,6 +66,7 @@ app.include_router(chart_images.router, prefix=PREFIX)
 app.include_router(pipeline.router,     prefix=PREFIX)
 app.include_router(estados.router,      prefix=PREFIX)
 app.include_router(feedback.router,     prefix=PREFIX)
+app.include_router(me.router,           prefix=PREFIX)
 app.include_router(premium.router,      prefix=PREFIX)
 app.include_router(alerts.router,       prefix=PREFIX)
 app.include_router(competitors.router,  prefix=PREFIX)

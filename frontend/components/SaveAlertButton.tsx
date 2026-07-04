@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { api, type Filters, type Frecuencia } from '@/lib/api'
-import { usePremium } from '@/lib/premium-context'
+import { useFeatureGate } from '@/lib/useFeatureGate'
+import PaywallModal from './PaywallModal'
 
 interface SaveAlertButtonProps {
   filters: Filters
@@ -23,7 +24,7 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
-  const { email, requirePro } = usePremium()
+  const { attempt, showPaywall, closePaywall, feature } = useFeatureGate('saved_alerts')
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [frecuencia, setFrecuencia] = useState<Frecuencia>('daily')
@@ -31,13 +32,13 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
 
   const hasFilters = !!(filters.entidad || filters.contratista || filters.estado || filters.desde || filters.hasta)
 
-  const openForm = () => requirePro(() => setOpen(true), 'alerts')
+  const openForm = () => attempt(() => setOpen(true))
 
   const save = async () => {
-    if (!email || name.trim().length < 1) return
+    if (name.trim().length < 1) return
     setStatus('guardando')
     try {
-      await api.createAlert(email, {
+      await api.createAlert({
         name: name.trim(),
         entidad: filters.entidad || null,
         contratista: filters.contratista || null,
@@ -168,6 +169,8 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
           </div>
         </div>
       )}
+
+      {showPaywall && <PaywallModal feature={feature} onClose={closePaywall} />}
     </>
   )
 }

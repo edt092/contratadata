@@ -1,4 +1,5 @@
-"""Alertas guardadas (plan Pro) — ver scalability.md.
+"""Alertas guardadas (plan Pro, ver auth.md) — identidad vía JWT Auth0, nunca
+un query param espoofeable.
 
 El envío automático (email/push cuando hay contratos nuevos que matchean)
 no está implementado todavía; ver evaluate_alerts.py para el chequeo batch
@@ -9,11 +10,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_db, require_pro
+from src.api.deps import get_db, require_feature
 from src.api.schemas import SavedAlertCreate, SavedAlertItem, SavedAlertUpdate
-from src.load.models import PremiumUser, SavedAlert
+from src.load.models import AppUser, SavedAlert
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
+require_saved_alerts = require_feature("saved_alerts")
+
+
+def _require_email(user: AppUser) -> str:
+    if not user.email:
+        raise HTTPException(status_code=400, detail="Tu cuenta de Auth0 no tiene email asociado.")
+    return user.email
 
 
 def _get_owned_alert(db: Session, alert_id: int, email: str) -> SavedAlert:
@@ -26,10 +34,10 @@ def _get_owned_alert(db: Session, alert_id: int, email: str) -> SavedAlert:
 @router.post("", response_model=SavedAlertItem)
 def create_alert(
     payload: SavedAlertCreate,
-    user: PremiumUser = Depends(require_pro),
+    user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> SavedAlertItem:
-    row = SavedAlert(user_email=user.email, **payload.model_dump())
+    row = SavedAlert(user_email=_require_email(user), **payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -38,12 +46,12 @@ def create_alert(
 
 @router.get("", response_model=list[SavedAlertItem])
 def list_alerts(
-    user: PremiumUser = Depends(require_pro),
+    user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> list[SavedAlertItem]:
     rows = db.execute(
         select(SavedAlert)
-        .where(SavedAlert.user_email == user.email)
+        .where(SavedAlert.user_email == _require_email(user))
         .order_by(SavedAlert.created_at.desc())
     ).scalars().all()
     return [SavedAlertItem.model_validate(r) for r in rows]
@@ -53,10 +61,10 @@ def list_alerts(
 def update_alert(
     alert_id: int,
     payload: SavedAlertUpdate,
-    user: PremiumUser = Depends(require_pro),
+    user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> SavedAlertItem:
-    alert = _get_owned_alert(db, alert_id, user.email)
+    alert = _get_owned_alert(db, alert_id, _require_email(user))
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(alert, key, value)
     db.commit()
@@ -67,9 +75,9 @@ def update_alert(
 @router.delete("/{alert_id}", status_code=204)
 def delete_alert(
     alert_id: int,
-    user: PremiumUser = Depends(require_pro),
+    user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> None:
-    alert = _get_owned_alert(db, alert_id, user.email)
+    alert = _get_owned_alert(db, alert_id, _require_email(user))
     db.delete(alert)
     db.commit()

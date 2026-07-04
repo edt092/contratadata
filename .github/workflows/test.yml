@@ -22,6 +22,6 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run unit tests
-        run: pytest tests/test_extract.py tests/test_transform.py -v --cov=src --cov-report=term-missing
+        run: pytest tests/test_extract.py tests/test_transform.py tests/test_auth0.py -v --cov=src --cov-report=term-missing
         env:
           SOCRATA_APP_TOKEN: ""

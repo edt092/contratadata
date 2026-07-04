@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BarList } from '@tremor/react'
 import { api, type CompetitorItem } from '@/lib/api'
 import { fmtInt, fmtAbbr, estadoStyle } from '@/lib/format'
-import { usePremium } from '@/lib/premium-context'
+import { useMe } from '@/lib/useMe'
 
 interface CompetitorCardProps {
   competitor: CompetitorItem
@@ -13,7 +13,7 @@ interface CompetitorCardProps {
 
 export default function CompetitorCard({ competitor }: CompetitorCardProps) {
   const router = useRouter()
-  const { email } = usePremium()
+  const { auth0User } = useMe()
   const queryClient = useQueryClient()
   const name = competitor.supplier_name
 
@@ -31,9 +31,8 @@ export default function CompetitorCard({ competitor }: CompetitorCardProps) {
   })
 
   const unfollow = async () => {
-    if (!email) return
-    await api.unfollowCompetitor(email, competitor.id)
-    queryClient.invalidateQueries({ queryKey: ['my-competitors', email] })
+    await api.unfollowCompetitor(competitor.id)
+    queryClient.invalidateQueries({ queryKey: ['my-competitors', auth0User?.sub] })
   }
 
   const summary = summaryQ.data

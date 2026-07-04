@@ -1,10 +1,10 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, apiErrorStatus, type SavedAlertItem } from '@/lib/api'
-import { usePremium } from '@/lib/premium-context'
+import { api, type SavedAlertItem } from '@/lib/api'
+import { useMe } from '@/lib/useMe'
 import { fmtDateTime } from '@/lib/format'
-import PremiumPageGate from '@/components/PremiumPageGate'
+import PremiumGate from '@/components/PremiumGate'
 
 const thStyle: React.CSSProperties = {
   padding: '11px 16px',
@@ -31,33 +31,98 @@ function resumenFiltros(a: SavedAlertItem): string {
   return partes.length ? partes.join(' · ') : 'Todos los contratos'
 }
 
-export default function AlertasPage() {
-  const { email } = usePremium()
+function AlertsList() {
+  const { auth0User } = useMe()
   const queryClient = useQueryClient()
 
   const alertsQ = useQuery({
-    queryKey: ['my-alerts', email],
-    queryFn: () => api.listAlerts(email!),
-    enabled: !!email,
-    retry: false,
+    queryKey: ['my-alerts', auth0User?.sub],
+    queryFn: api.listAlerts,
   })
 
-  const needsPro = apiErrorStatus(alertsQ.error) === 402
-
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['my-alerts', email] })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['my-alerts', auth0User?.sub] })
 
   const toggleActive = async (alert: SavedAlertItem) => {
-    if (!email) return
-    await api.updateAlert(email, alert.id, { is_active: !alert.is_active })
+    await api.updateAlert(alert.id, { is_active: !alert.is_active })
     invalidate()
   }
 
   const remove = async (alert: SavedAlertItem) => {
-    if (!email) return
-    await api.deleteAlert(email, alert.id)
+    await api.deleteAlert(alert.id)
     invalidate()
   }
 
+  if (alertsQ.isLoading) {
+    return <div style={{ color: 'var(--muted)', fontSize: 14 }}>Cargando…</div>
+  }
+
+  if (!alertsQ.data || alertsQ.data.length === 0) {
+    return (
+      <div style={{
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
+        padding: '56px 20px', textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
+          Aún no tienes alertas guardadas
+        </div>
+        <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
+          Ve al dashboard, aplica los filtros que te interesan y usa "Guardar alerta".
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Nombre</th>
+              <th style={thStyle}>Filtros</th>
+              <th style={thStyle}>Frecuencia</th>
+              <th style={thStyle}>Último chequeo</th>
+              <th style={thStyle}>Estado</th>
+              <th style={thStyle}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {alertsQ.data.map(a => (
+              <tr key={a.id} className="row-hover" style={{ borderBottom: '1px solid var(--border)' }}>
+                <td style={{ padding: '13px 16px', fontWeight: 600, color: 'var(--text)' }}>{a.name}</td>
+                <td style={{ padding: '13px 16px', color: 'var(--muted)', maxWidth: 320 }}>{resumenFiltros(a)}</td>
+                <td style={{ padding: '13px 16px', color: 'var(--muted)' }}>{a.frecuencia === 'daily' ? 'Diaria' : 'Semanal'}</td>
+                <td style={{ padding: '13px 16px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>
+                  {a.last_checked_at ? fmtDateTime(a.last_checked_at) : 'Aún no'}
+                </td>
+                <td style={{ padding: '13px 16px' }}>
+                  <button
+                    onClick={() => toggleActive(a)}
+                    style={{
+                      background: a.is_active ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
+                      color: a.is_active ? 'var(--success)' : 'var(--muted)',
+                      border: '1px solid var(--border)', borderRadius: 8,
+                      padding: '6px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {a.is_active ? 'Activa' : 'Pausada'}
+                  </button>
+                </td>
+                <td style={{ padding: '13px 16px' }}>
+                  <button className="btn-link" onClick={() => remove(a)} style={{ color: 'var(--danger)', fontSize: 12.5, fontWeight: 600 }}>
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+export default function AlertasPage() {
   return (
     <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       <div style={{ marginBottom: 24 }}>
@@ -69,70 +134,9 @@ export default function AlertasPage() {
         </p>
       </div>
 
-      <PremiumPageGate needsPro={needsPro} feature="alerts_page">
-        {alertsQ.isLoading ? (
-          <div style={{ color: 'var(--muted)', fontSize: 14 }}>Cargando…</div>
-        ) : !alertsQ.data || alertsQ.data.length === 0 ? (
-          <div style={{
-            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-            padding: '56px 20px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
-              Aún no tienes alertas guardadas
-            </div>
-            <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
-              Ve al dashboard, aplica los filtros que te interesan y usa "Guardar alerta".
-            </div>
-          </div>
-        ) : (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Nombre</th>
-                    <th style={thStyle}>Filtros</th>
-                    <th style={thStyle}>Frecuencia</th>
-                    <th style={thStyle}>Último chequeo</th>
-                    <th style={thStyle}>Estado</th>
-                    <th style={thStyle}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {alertsQ.data.map(a => (
-                    <tr key={a.id} className="row-hover" style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '13px 16px', fontWeight: 600, color: 'var(--text)' }}>{a.name}</td>
-                      <td style={{ padding: '13px 16px', color: 'var(--muted)', maxWidth: 320 }}>{resumenFiltros(a)}</td>
-                      <td style={{ padding: '13px 16px', color: 'var(--muted)' }}>{a.frecuencia === 'daily' ? 'Diaria' : 'Semanal'}</td>
-                      <td style={{ padding: '13px 16px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>
-                        {a.last_checked_at ? fmtDateTime(a.last_checked_at) : 'Aún no'}
-                      </td>
-                      <td style={{ padding: '13px 16px' }}>
-                        <button
-                          onClick={() => toggleActive(a)}
-                          style={{
-                            background: a.is_active ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
-                            color: a.is_active ? 'var(--success)' : 'var(--muted)',
-                            border: '1px solid var(--border)', borderRadius: 8,
-                            padding: '6px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-                          }}
-                        >
-                          {a.is_active ? 'Activa' : 'Pausada'}
-                        </button>
-                      </td>
-                      <td style={{ padding: '13px 16px' }}>
-                        <button className="btn-link" onClick={() => remove(a)} style={{ color: 'var(--danger)', fontSize: 12.5, fontWeight: 600 }}>
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </PremiumPageGate>
+      <PremiumGate feature="saved_alerts">
+        <AlertsList />
+      </PremiumGate>
     </main>
   )
 }

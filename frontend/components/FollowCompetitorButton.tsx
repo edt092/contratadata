@@ -3,42 +3,45 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { usePremium } from '@/lib/premium-context'
+import { useMe } from '@/lib/useMe'
+import { useFeatureGate } from '@/lib/useFeatureGate'
+import PaywallModal from './PaywallModal'
 
 interface FollowCompetitorButtonProps {
   supplierName: string
 }
 
 export default function FollowCompetitorButton({ supplierName }: FollowCompetitorButtonProps) {
-  const { email, requirePro } = usePremium()
+  const { isLoggedIn, auth0User } = useMe()
+  const { attempt, showPaywall, closePaywall, feature } = useFeatureGate('competitor_monitor')
   const queryClient = useQueryClient()
   const [busy, setBusy] = useState(false)
 
   const listQ = useQuery({
-    queryKey: ['my-competitors', email],
-    queryFn: () => api.listCompetitors(email!),
-    enabled: !!email,
+    queryKey: ['my-competitors', auth0User?.sub],
+    queryFn: api.listCompetitors,
+    enabled: isLoggedIn,
     retry: false,
   })
 
   const existing = listQ.data?.find(c => c.supplier_name === supplierName)
 
-  const follow = async (resolvedEmail: string) => {
+  const follow = async () => {
     setBusy(true)
     try {
-      await api.followCompetitor(resolvedEmail, { supplier_name: supplierName })
-      queryClient.invalidateQueries({ queryKey: ['my-competitors', resolvedEmail] })
+      await api.followCompetitor({ supplier_name: supplierName })
+      queryClient.invalidateQueries({ queryKey: ['my-competitors', auth0User?.sub] })
     } finally {
       setBusy(false)
     }
   }
 
   const unfollow = async () => {
-    if (!email || !existing) return
+    if (!existing) return
     setBusy(true)
     try {
-      await api.unfollowCompetitor(email, existing.id)
-      queryClient.invalidateQueries({ queryKey: ['my-competitors', email] })
+      await api.unfollowCompetitor(existing.id)
+      queryClient.invalidateQueries({ queryKey: ['my-competitors', auth0User?.sub] })
     } finally {
       setBusy(false)
     }
@@ -49,26 +52,30 @@ export default function FollowCompetitorButton({ supplierName }: FollowCompetito
       unfollow()
       return
     }
-    requirePro(follow, 'competitors')
+    attempt(follow)
   }
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={busy}
-      style={{
-        background: existing ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
-        color: existing ? 'var(--success)' : 'var(--text)',
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        padding: '9px 14px',
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: busy ? 'wait' : 'pointer',
-        opacity: busy ? 0.7 : 1,
-      }}
-    >
-      {existing ? '✓ Siguiendo competidor' : '+ Seguir competidor'}
-    </button>
+    <>
+      <button
+        onClick={handleClick}
+        disabled={busy}
+        style={{
+          background: existing ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
+          color: existing ? 'var(--success)' : 'var(--text)',
+          border: '1px solid var(--border)',
+          borderRadius: 8,
+          padding: '9px 14px',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: busy ? 'wait' : 'pointer',
+          opacity: busy ? 0.7 : 1,
+        }}
+      >
+        {existing ? '✓ Siguiendo competidor' : '+ Seguir competidor'}
+      </button>
+
+      {showPaywall && <PaywallModal feature={feature} onClose={closePaywall} />}
+    </>
   )
 }

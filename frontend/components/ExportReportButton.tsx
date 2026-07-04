@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '@/lib/api'
-import { usePremium } from '@/lib/premium-context'
+import { api, downloadBlob } from '@/lib/api'
+import { useFeatureGate } from '@/lib/useFeatureGate'
+import PaywallModal from './PaywallModal'
 
 interface ExportReportButtonProps {
   kind: 'entity' | 'contractor'
@@ -10,25 +11,33 @@ interface ExportReportButtonProps {
 }
 
 export default function ExportReportButton({ kind, nombre }: ExportReportButtonProps) {
-  const { requirePro } = usePremium()
+  const { attempt, showPaywall, closePaywall, feature } = useFeatureGate('reports')
   const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  const reportUrl = (email: string, format: 'xlsx' | 'pdf') =>
-    kind === 'entity'
-      ? api.entityReportUrl(nombre, email, format)
-      : api.contractorReportUrl(nombre, email, format)
+  const fetchReport = (format: 'xlsx' | 'pdf') =>
+    kind === 'entity' ? api.downloadEntityReport(nombre, format) : api.downloadContractorReport(nombre, format)
 
   const download = (format: 'xlsx' | 'pdf') => {
     setOpen(false)
-    requirePro(resolvedEmail => {
-      window.open(reportUrl(resolvedEmail, format), '_blank')
-    }, 'reports')
+    attempt(async () => {
+      setBusy(true)
+      try {
+        const { blob, filename } = await fetchReport(format)
+        downloadBlob(blob, filename)
+      } catch {
+        alert('No pudimos generar el reporte ahora. Intenta de nuevo en unos minutos.')
+      } finally {
+        setBusy(false)
+      }
+    })
   }
 
   return (
     <div style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
+        disabled={busy}
         style={{
           background: 'var(--surface2)',
           color: 'var(--text)',
@@ -37,10 +46,11 @@ export default function ExportReportButton({ kind, nombre }: ExportReportButtonP
           padding: '9px 14px',
           fontSize: 13,
           fontWeight: 600,
-          cursor: 'pointer',
+          cursor: busy ? 'wait' : 'pointer',
+          opacity: busy ? 0.7 : 1,
         }}
       >
-        ↓ Exportar reporte
+        {busy ? 'Generando…' : '↓ Exportar reporte'}
       </button>
 
       {open && (
@@ -75,6 +85,8 @@ export default function ExportReportButton({ kind, nombre }: ExportReportButtonP
           </div>
         </>
       )}
+
+      {showPaywall && <PaywallModal feature={feature} onClose={closePaywall} />}
     </div>
   )
 }

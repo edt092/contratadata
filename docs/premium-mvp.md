@@ -1,11 +1,21 @@
 # MVP Premium — ContrataData Pro
 
+> **Superseded parcialmente** — este documento describe la primera versión
+> del MVP premium (acceso por email en `localStorage`, sin login real). Esa
+> capa de identidad fue reemplazada por autenticación real con Auth0 (ver
+> `auth.md` y `docs/auth0-setup.md`): `premium_users`/`admin_set_premium.py`
+> ya no existen, reemplazados por `app_users`+`subscriptions`
+> (`admin_set_pro.py`). Las 4 features (alertas, competidores, reportes,
+> plan Pro) y sus tablas `saved_alerts`/`competitor_watchlist`/`premium_leads`
+> siguen vigentes tal cual se describen acá — solo cambió *quién* prueba que
+> es cada usuario, no *qué* puede hacer una vez identificado.
+
 Implementación inicial de las 4 funcionalidades premium descritas en
 `scalability.md`: alertas guardadas, monitor de competidores, reportes
 Excel/PDF y un plan Pro simple sin pagos automatizados todavía.
 
 **Prioridad del MVP**: validar si usuarios reales pagarían por esto antes de
-construir más — por eso no hay login, ni Stripe/MercadoPago, ni backoffice.
+construir más — por eso no hay Stripe/MercadoPago ni backoffice todavía.
 
 ---
 

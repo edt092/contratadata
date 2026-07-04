@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
+import { UserProvider } from '@auth0/nextjs-auth0/client'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import { ThemeProvider } from '@/lib/theme-context'
 import { QueryProvider } from '@/lib/query-provider'
 import { FeedbackProvider } from '@/lib/feedback-context'
-import { PremiumProvider } from '@/lib/premium-context'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' })
@@ -37,16 +37,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${mono.variable}`}>
       <body>
-        <QueryProvider>
-          <ThemeProvider>
-            <PremiumProvider>
+        <UserProvider>
+          <QueryProvider>
+            <ThemeProvider>
               <FeedbackProvider>
                 <Navbar />
                 {children}
               </FeedbackProvider>
-            </PremiumProvider>
-          </ThemeProvider>
-        </QueryProvider>
+            </ThemeProvider>
+          </QueryProvider>
+        </UserProvider>
       </body>
     </html>
   )

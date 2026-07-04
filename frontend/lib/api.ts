@@ -16,6 +16,11 @@ async function get<T>(path: string, params?: Record<string, string | number | bo
   return res.json()
 }
 
+interface ApiError extends Error {
+  status?: number
+  body?: unknown
+}
+
 async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     method,
@@ -23,7 +28,7 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) {
-    const err = new Error(`API ${res.status} — ${path}`) as Error & { status?: number }
+    const err = new Error(`API ${res.status} — ${path}`) as ApiError
     err.status = res.status
     throw err
   }
@@ -32,13 +37,90 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 }
 
 const post = <T>(path: string, body: unknown) => send<T>('POST', path, body)
-const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body)
-const del = <T>(path: string) => send<T>('DELETE', path)
 
-// 402 = requiere plan Pro (ver src/api/deps.py::require_pro) — las páginas
-// premium usan esto para distinguir "falta plan Pro" de un error genérico.
+// ── Llamadas autenticadas (Auth0) ─────────────────────────────────────────────
+// El access token vive en la cookie de sesión httpOnly del SDK de Auth0
+// (nunca localStorage, ver auth.md) — /api/token lo expone en memoria para
+// el request en curso, leído server-side desde esa cookie.
+
+async function getAccessToken(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/token')
+    if (!res.ok) return null
+    const data: { accessToken: string | null } = await res.json()
+    return data.accessToken
+  } catch {
+    return null
+  }
+}
+
+function unauthenticatedError(path: string): ApiError {
+  const err = new Error(`No autenticado — ${path}`) as ApiError
+  err.status = 401
+  return err
+}
+
+async function authSend<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = await getAccessToken()
+  if (!token) throw unauthenticatedError(path)
+
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    const err = new Error(`API ${res.status} — ${path}`) as ApiError
+    err.status = res.status
+    err.body = await res.json().catch(() => null)
+    throw err
+  }
+  if (res.status === 204) return undefined as T
+  return res.json()
+}
+
+const authGet = <T>(path: string) => authSend<T>('GET', path)
+
+async function authGetBlob(path: string): Promise<{ blob: Blob; filename: string }> {
+  const token = await getAccessToken()
+  if (!token) throw unauthenticatedError(path)
+
+  const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    const err = new Error(`API ${res.status} — ${path}`) as ApiError
+    err.status = res.status
+    err.body = await res.json().catch(() => null)
+    throw err
+  }
+  const blob = await res.blob()
+  const match = (res.headers.get('Content-Disposition') ?? '').match(/filename="?([^"]+)"?/)
+  return { blob, filename: match?.[1] ?? 'reporte' }
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// 401 = no autenticado, 403 (con body.error === 'premium_required') = falta
+// plan Pro (ver src/api/deps.py::require_pro/require_feature) — las páginas
+// premium usan esto para decidir entre CTA de login y paywall suave.
 export const apiErrorStatus = (err: unknown): number | undefined =>
-  (err as { status?: number } | null)?.status
+  (err as ApiError | null)?.status
+
+export const isPremiumRequiredError = (err: unknown): boolean => {
+  const body = (err as ApiError | null)?.body as { error?: string } | undefined
+  return apiErrorStatus(err) === 403 && body?.error === 'premium_required'
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -164,19 +246,30 @@ export interface FeedbackResponse {
   reward_status: string
 }
 
-// ── Premium (MVP — ver scalability.md) ───────────────────────────────────────
+// ── Auth / Premium (ver auth.md) ─────────────────────────────────────────────
+
+export type FeatureKey = 'saved_alerts' | 'competitor_monitor' | 'reports'
+
+export interface MeResponse {
+  id: number
+  auth0_sub: string
+  email: string | null
+  name: string | null
+  picture: string | null
+  plan: 'free' | 'pro'
+  premium_status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired' | 'none'
+  entitlements: Record<FeatureKey, boolean>
+}
 
 export interface PremiumStatus {
-  email: string
   plan: 'free' | 'pro'
-  premium_status: 'active' | 'trial' | 'expired'
-  premium_until: string | null
+  premium_status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired' | 'none'
   is_pro: boolean
+  entitlements: Record<FeatureKey, boolean>
 }
 
 export interface PremiumLeadPayload {
-  email: string
-  feature?: string
+  feature?: FeatureKey
 }
 
 export interface PremiumLeadResponse {
@@ -292,27 +385,28 @@ export const api = {
   // Feedback de usuarios (user testing, sin login)
   submitFeedback: (payload: FeedbackPayload) => post<FeedbackResponse>('/feedback', payload),
 
-  // Premium — acceso por email, sin login (ver scalability.md)
-  premiumStatus: (email: string) => get<PremiumStatus>('/premium/status', { email }),
-  submitPremiumLead: (payload: PremiumLeadPayload) => post<PremiumLeadResponse>('/premium/leads', payload),
+  // Auth / perfil (ver auth.md) — requieren sesión Auth0
+  me: () => authGet<MeResponse>('/me'),
+  premiumStatus: () => authGet<PremiumStatus>('/premium/status'),
+  requestProAccess: (payload: PremiumLeadPayload) =>
+    authSend<PremiumLeadResponse>('POST', '/premium/request-access', payload),
 
   // Alertas guardadas (plan Pro)
-  createAlert: (email: string, payload: SavedAlertPayload) =>
-    post<SavedAlertItem>(`/alerts?${new URLSearchParams({ email })}`, payload),
-  listAlerts: (email: string) => get<SavedAlertItem[]>('/alerts', { email }),
-  updateAlert: (email: string, id: number, payload: Partial<Pick<SavedAlertItem, 'name' | 'is_active' | 'frecuencia'>>) =>
-    patch<SavedAlertItem>(`/alerts/${id}?${new URLSearchParams({ email })}`, payload),
-  deleteAlert: (email: string, id: number) => del<void>(`/alerts/${id}?${new URLSearchParams({ email })}`),
+  createAlert: (payload: SavedAlertPayload) => authSend<SavedAlertItem>('POST', '/alerts', payload),
+  listAlerts: () => authGet<SavedAlertItem[]>('/alerts'),
+  updateAlert: (id: number, payload: Partial<Pick<SavedAlertItem, 'name' | 'is_active' | 'frecuencia'>>) =>
+    authSend<SavedAlertItem>('PATCH', `/alerts/${id}`, payload),
+  deleteAlert: (id: number) => authSend<void>('DELETE', `/alerts/${id}`),
 
   // Monitor de competidores (plan Pro)
-  followCompetitor: (email: string, payload: CompetitorPayload) =>
-    post<CompetitorItem>(`/competitors?${new URLSearchParams({ email })}`, payload),
-  listCompetitors: (email: string) => get<CompetitorItem[]>('/competitors', { email }),
-  unfollowCompetitor: (email: string, id: number) => del<void>(`/competitors/${id}?${new URLSearchParams({ email })}`),
+  followCompetitor: (payload: CompetitorPayload) => authSend<CompetitorItem>('POST', '/competitors', payload),
+  listCompetitors: () => authGet<CompetitorItem[]>('/competitors'),
+  unfollowCompetitor: (id: number) => authSend<void>('DELETE', `/competitors/${id}`),
 
-  // Reportes Excel/PDF (plan Pro) — URLs de descarga directa
-  entityReportUrl: (nombre: string, email: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
-    buildUrl(`/reports/entity/${encodeURIComponent(nombre)}.${format}`, { email }),
-  contractorReportUrl: (nombre: string, email: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
-    buildUrl(`/reports/contractor/${encodeURIComponent(nombre)}.${format}`, { email }),
+  // Reportes Excel/PDF (plan Pro) — Blob vía fetch autenticado: un access
+  // token en la URL (para navegación directa) quedaría en logs/historial.
+  downloadEntityReport: (nombre: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
+    authGetBlob(`/reports/entity/${encodeURIComponent(nombre)}.${format}`),
+  downloadContractorReport: (nombre: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
+    authGetBlob(`/reports/contractor/${encodeURIComponent(nombre)}.${format}`),
 }

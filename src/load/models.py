@@ -152,34 +152,83 @@ class Feedback(Base):
         return f"<Feedback id={self.id} type='{self.feedback_type}'>"
 
 
-class PremiumUser(Base):
-    """Acceso premium por email — sin login, sin passwords. MVP de validación
-    (ver scalability.md): un admin marca manualmente el email como 'pro' en
-    esta tabla después de que el pago se coordina fuera de banda."""
-    __tablename__ = "premium_users"
+class AppUser(Base):
+    """Usuario autenticado vía Auth0 (ver auth.md). Auth0 responde 'quién es
+    el usuario' (auth0_sub es la identidad estable); ContrataData/Neon
+    responde 'qué plan tiene' (Subscription/PremiumEntitlement) — nunca al
+    revés. Se crea/actualiza en cada sync (GET /api/me o cualquier endpoint
+    autenticado), no en el login en sí."""
+    __tablename__ = "app_users"
 
-    id              = Column(Integer, primary_key=True, autoincrement=True)
-    email           = Column(String(255), unique=True, nullable=False)
-    # free | pro
-    plan            = Column(String(20), nullable=False, default="free")
-    # active | trial | expired
-    premium_status  = Column(String(20), nullable=False, default="trial")
-    premium_until   = Column(DateTime)
-    created_at      = Column(DateTime, nullable=False, default=func.now())
-    updated_at      = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    auth0_sub      = Column(String(255), unique=True, nullable=False)
+    email          = Column(String(255), unique=True)
+    email_verified = Column(Boolean, nullable=False, default=False)
+    name           = Column(String(255))
+    picture        = Column(String(1000))
+    created_at     = Column(DateTime, nullable=False, default=func.now())
+    updated_at     = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    last_login_at  = Column(DateTime)
 
     def __repr__(self) -> str:
-        return f"<PremiumUser email='{self.email}' plan='{self.plan}'>"
+        return f"<AppUser id={self.id} email='{self.email}'>"
+
+
+class Subscription(Base):
+    """Suscripción del usuario — fuente de verdad del plan pago. Sin
+    integración de pagos todavía (ver auth.md): 'provider' queda nullable y
+    'manual' hasta conectar Stripe/Wompi/MercadoPago por webhook."""
+    __tablename__ = "subscriptions"
+
+    id                      = Column(Integer, primary_key=True, autoincrement=True)
+    user_id                 = Column(Integer, ForeignKey("app_users.id"), nullable=False)
+    # free | pro
+    plan                    = Column(String(20), nullable=False, default="free")
+    # trialing | active | past_due | canceled | expired
+    status                  = Column(String(20), nullable=False, default="trialing")
+    # stripe | wompi | mercadopago | manual
+    provider                = Column(String(30))
+    provider_customer_id    = Column(String(255))
+    provider_subscription_id = Column(String(255))
+    current_period_end      = Column(DateTime)
+    created_at              = Column(DateTime, nullable=False, default=func.now())
+    updated_at              = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+    def __repr__(self) -> str:
+        return f"<Subscription user_id={self.user_id} plan='{self.plan}' status='{self.status}'>"
+
+
+class PremiumEntitlement(Base):
+    """Acceso a una feature específica fuera de una subscription normal —
+    créditos beta, cortesías manuales, etc. Un usuario Free puede tener un
+    entitlement puntual sin ser Pro en general (ver require_feature)."""
+    __tablename__ = "premium_entitlements"
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    user_id     = Column(Integer, ForeignKey("app_users.id"), nullable=False)
+    # saved_alerts | competitor_monitor | reports
+    feature_key = Column(String(50), nullable=False)
+    is_enabled  = Column(Boolean, nullable=False, default=True)
+    # subscription | manual | beta_credit
+    source      = Column(String(30), nullable=False, default="manual")
+    expires_at  = Column(DateTime)
+    created_at  = Column(DateTime, nullable=False, default=func.now())
+
+    def __repr__(self) -> str:
+        return f"<PremiumEntitlement user_id={self.user_id} feature='{self.feature_key}'>"
 
 
 class PremiumLead(Base):
-    """Emails interesados en el plan Pro desde el paywall suave — antes de
-    tener cobros automatizados, esto es la señal de validación de demanda."""
+    """Interés en el plan Pro desde el paywall suave — antes de tener cobros
+    automatizados, esto es la señal de validación de demanda. 'user_id' es
+    nullable porque el endpoint autenticado (POST /premium/request-access)
+    y el histórico anterior sin login pueden coexistir."""
     __tablename__ = "premium_leads"
 
     id         = Column(Integer, primary_key=True, autoincrement=True)
+    user_id    = Column(Integer, ForeignKey("app_users.id"))
     email      = Column(String(255), nullable=False)
-    # Feature que disparó el paywall (ej. 'alerts', 'competitors', 'reports') — nullable.
+    # Feature que disparó el paywall (ej. 'saved_alerts', 'competitor_monitor', 'reports') — nullable.
     feature    = Column(String(50))
     created_at = Column(DateTime, nullable=False, default=func.now())
 

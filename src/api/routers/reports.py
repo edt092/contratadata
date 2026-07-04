@@ -1,15 +1,19 @@
-"""GET /api/reports — reportes Excel/PDF de entidad y contratista (plan Pro)."""
+"""GET /api/reports — reportes Excel/PDF de entidad y contratista (plan Pro,
+ver auth.md). Requieren 'Authorization: Bearer <token>' — no aceptan email
+por query param, así que el frontend los descarga vía fetch() + Blob en vez
+de una navegación directa (un token en la URL quedaría en logs/historial)."""
 
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_db, require_pro
+from src.api.deps import get_db, require_feature
 from src.api.reports import (
     build_pdf, build_workbook, contractor_report_data, entity_report_data, safe_filename,
 )
-from src.load.models import PremiumUser
+from src.load.models import AppUser
 
 router = APIRouter(prefix="/reports", tags=["reports"])
+require_reports = require_feature("reports")
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 PDF_MIME = "application/pdf"
@@ -25,7 +29,7 @@ def _attachment(content: bytes, media_type: str, filename: str) -> Response:
 
 @router.get("/entity/{nombre}.xlsx")
 def entity_report_xlsx(
-    nombre: str, user: PremiumUser = Depends(require_pro), db: Session = Depends(get_db),
+    nombre: str, user: AppUser = Depends(require_reports), db: Session = Depends(get_db),
 ) -> Response:
     data = entity_report_data(db, nombre)
     buf = build_workbook(data)
@@ -34,7 +38,7 @@ def entity_report_xlsx(
 
 @router.get("/entity/{nombre}.pdf")
 def entity_report_pdf(
-    nombre: str, user: PremiumUser = Depends(require_pro), db: Session = Depends(get_db),
+    nombre: str, user: AppUser = Depends(require_reports), db: Session = Depends(get_db),
 ) -> Response:
     data = entity_report_data(db, nombre)
     buf = build_pdf(data)
@@ -43,7 +47,7 @@ def entity_report_pdf(
 
 @router.get("/contractor/{nombre}.xlsx")
 def contractor_report_xlsx(
-    nombre: str, user: PremiumUser = Depends(require_pro), db: Session = Depends(get_db),
+    nombre: str, user: AppUser = Depends(require_reports), db: Session = Depends(get_db),
 ) -> Response:
     data = contractor_report_data(db, nombre)
     buf = build_workbook(data)
@@ -52,7 +56,7 @@ def contractor_report_xlsx(
 
 @router.get("/contractor/{nombre}.pdf")
 def contractor_report_pdf(
-    nombre: str, user: PremiumUser = Depends(require_pro), db: Session = Depends(get_db),
+    nombre: str, user: AppUser = Depends(require_reports), db: Session = Depends(get_db),
 ) -> Response:
     data = contractor_report_data(db, nombre)
     buf = build_pdf(data)

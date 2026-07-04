@@ -163,12 +163,6 @@ class FeedbackResponse(BaseModel):
     reward_status: str
 
 
-# ── Premium (MVP de validación — ver scalability.md) ─────────────────────────
-
-Plan = Literal["free", "pro"]
-PremiumStatusValue = Literal["active", "trial", "expired"]
-
-
 def _validar_email_requerido(v: str) -> str:
     v = v.strip()
     if not _EMAIL_RE.match(v):
@@ -176,27 +170,41 @@ def _validar_email_requerido(v: str) -> str:
     return v
 
 
-class PremiumLeadCreate(BaseModel):
-    email: str = Field(max_length=255)
-    feature: Optional[str] = Field(default=None, max_length=50)
+# ── Auth / Premium (ver auth.md) ─────────────────────────────────────────────
+# Auth0 resuelve la identidad (auth0_sub/email/name/picture); estos schemas
+# solo exponen qué plan tiene ese usuario según Neon (Subscription/
+# PremiumEntitlement) — nunca al revés.
 
-    @field_validator("email")
-    @classmethod
-    def _validar_email(cls, v: str) -> str:
-        return _validar_email_requerido(v)
+Plan = Literal["free", "pro"]
+SubscriptionStatus = Literal["trialing", "active", "past_due", "canceled", "expired", "none"]
+FeatureKey = Literal["saved_alerts", "competitor_monitor", "reports"]
+
+
+class MeResponse(BaseModel):
+    id: int
+    auth0_sub: str
+    email: Optional[str]
+    name: Optional[str]
+    picture: Optional[str]
+    plan: Plan
+    premium_status: SubscriptionStatus
+    entitlements: dict[str, bool]
+
+
+class PremiumStatusResponse(BaseModel):
+    plan: Plan
+    premium_status: SubscriptionStatus
+    is_pro: bool
+    entitlements: dict[str, bool]
+
+
+class PremiumLeadCreate(BaseModel):
+    feature: Optional[FeatureKey] = None
 
 
 class PremiumLeadResponse(BaseModel):
     id: int
     email: str
-
-
-class PremiumStatusResponse(BaseModel):
-    email: str
-    plan: Plan
-    premium_status: PremiumStatusValue
-    premium_until: Optional[datetime]
-    is_pro: bool
 
 
 # ── Alertas guardadas ─────────────────────────────────────────────────────────
