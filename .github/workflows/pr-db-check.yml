@@ -1,0 +1,85 @@
+name: PR DB Check — Neon branch
+
+# Prueba cada PR contra una branch de Neon temporal (copia aislada de
+# producción), nunca contra la base real. Ver docs/neon-branches.md.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-db-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  db-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # No exponer secrets a PRs desde forks — GitHub tampoco los inyecta por
+    # defecto con el evento pull_request, pero lo dejamos explícito.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Crear branch temporal de Neon
+        id: neon-branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID || secrets.NEON_PROJECT_ID }}
+          branch_name: pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          parent_branch: main
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Enmascarar el connection string en los logs
+        run: |
+          echo "::add-mask::${{ steps.neon-branch.outputs.db_url }}"
+          echo "::add-mask::${{ steps.neon-branch.outputs.db_url_pooled }}"
+          echo "::add-mask::${{ steps.neon-branch.outputs.password }}"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Tests (incluye e2e con DB real de la branch)
+        run: pytest tests/ -v --cov=src --cov-report=term-missing
+        env:
+          DATABASE_URL: ${{ steps.neon-branch.outputs.db_url }}
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+
+      - name: ETL acotado contra la branch (MAX_RECORDS=100)
+        run: python -u pipeline.py
+        env:
+          DATABASE_URL: ${{ steps.neon-branch.outputs.db_url }}
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+          MAX_RECORDS: "100"
+          LOG_LEVEL: INFO
+          PAGE_DELAY: "0.3"
+
+      - name: Resumen en GitHub Step Summary
+        if: always()
+        run: |
+          {
+            echo "## PR DB Check — Neon branch"
+            echo ""
+            echo "| Campo | Valor |"
+            echo "|---|---|"
+            echo "| PR | #${{ github.event.pull_request.number }} |"
+            echo "| Branch Neon | \`pr-${{ github.event.pull_request.number }}-${{ github.run_id }}\` (temporal, eliminada al final) |"
+            echo "| Tests | ver resultado del paso 'Tests' arriba |"
+            echo "| ETL de prueba | MAX_RECORDS=100 |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Eliminar branch temporal de Neon
+        # Siempre corre, incluso si tests o ETL fallaron — nunca dejar
+        # branches de prueba huérfanas en el proyecto de Neon.
+        if: always()
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID || secrets.NEON_PROJECT_ID }}
+          branch: pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}

@@ -139,12 +139,20 @@ En producción el pipeline corre automáticamente cada día a las 3 AM (Colombia
 | Push a `main` | Railway → redeploy automático del backend (integración nativa GitHub↔Railway) |
 | Push a `main` | Vercel → redeploy automático del frontend (integración nativa GitHub↔Vercel) |
 | Diario 3 AM Colombia (o manual vía `workflow_dispatch`) | GitHub Actions → `etl.yml` ejecuta `pipeline.py` (ETL incremental) |
+| Pull request contra `main` | GitHub Actions → `pr-db-check.yml` prueba ETL + tests contra una branch de Neon temporal, nunca contra producción — ver [`docs/neon-branches.md`](docs/neon-branches.md) |
 
 Secrets requeridos en GitHub → Settings → Secrets → Actions (solo usados por `etl.yml`):
 
 ```
-DATABASE_URL         → URL de Neon
+DATABASE_URL         → URL de Neon (producción)
 SOCRATA_APP_TOKEN    → token de datos.gov.co
+```
+
+Secrets/variables adicionales para `pr-db-check.yml` (branches de Neon temporales, nunca tocan producción — ver [`docs/neon-branches.md`](docs/neon-branches.md)):
+
+```
+NEON_API_KEY         → secret, autentica las Neon Actions de create/delete branch
+NEON_PROJECT_ID      → variable (o secret), id del proyecto de Neon
 ```
 
 Railway y Vercel despliegan directamente desde su propia integración con el repo — no dependen de GitHub Actions.
