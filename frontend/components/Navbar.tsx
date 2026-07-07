@@ -15,6 +15,7 @@ const NAV = [
 ]
 
 const PREMIUM_NAV = [
+  { label: 'Premium', href: '/premium' },
   { label: 'Mis alertas', href: '/alertas' },
   { label: 'Competidores', href: '/competidores' },
 ]
