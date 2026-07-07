@@ -207,6 +207,24 @@ class PremiumLeadResponse(BaseModel):
     email: str
 
 
+# ── Checkout Wompi ────────────────────────────────────────────────────────────
+
+CheckoutPlan = Literal["monthly", "annual"]
+
+
+class CheckoutCreate(BaseModel):
+    plan: CheckoutPlan
+
+
+class CheckoutResponse(BaseModel):
+    public_key: str
+    reference: str
+    amount_in_cents: int
+    currency: str = "COP"
+    signature: str
+    redirect_url: str
+
+
 # ── Alertas guardadas ─────────────────────────────────────────────────────────
 
 Frecuencia = Literal["daily", "weekly"]

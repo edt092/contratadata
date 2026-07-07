@@ -279,6 +279,29 @@ class CompetitorWatch(Base):
         return f"<CompetitorWatch user='{self.user_email}' supplier='{self.supplier_name}'>"
 
 
+class PaymentReference(Base):
+    """Puente entre un checkout de Wompi y el usuario que lo inició — el
+    webhook de Wompi (ver src/api/routers/webhooks.py) solo trae 'reference'
+    y datos de la transacción, no nuestro user_id, así que esta fila se crea
+    *antes* de redirigir al widget para poder correlacionar la respuesta."""
+    __tablename__ = "payment_references"
+
+    id                   = Column(Integer, primary_key=True, autoincrement=True)
+    user_id              = Column(Integer, ForeignKey("app_users.id"), nullable=False)
+    reference            = Column(String(120), unique=True, nullable=False)
+    # monthly | annual
+    plan                 = Column(String(20), nullable=False)
+    amount_in_cents      = Column(Integer, nullable=False)
+    # pending | approved | declined | voided | error
+    status               = Column(String(20), nullable=False, default="pending")
+    wompi_transaction_id = Column(String(255))
+    created_at           = Column(DateTime, nullable=False, default=func.now())
+    updated_at           = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+    def __repr__(self) -> str:
+        return f"<PaymentReference reference='{self.reference}' status='{self.status}'>"
+
+
 class RejectedRecord(Base):
     __tablename__ = "rejected_records"
 

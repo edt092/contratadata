@@ -277,6 +277,21 @@ export interface PremiumLeadResponse {
   email: string
 }
 
+export type CheckoutPlan = 'monthly' | 'annual'
+
+export interface CheckoutPayload {
+  plan: CheckoutPlan
+}
+
+export interface CheckoutResponse {
+  public_key: string
+  reference: string
+  amount_in_cents: number
+  currency: string
+  signature: string
+  redirect_url: string
+}
+
 export type Frecuencia = 'daily' | 'weekly'
 
 export interface SavedAlertPayload {
@@ -390,6 +405,8 @@ export const api = {
   premiumStatus: () => authGet<PremiumStatus>('/premium/status'),
   requestProAccess: (payload: PremiumLeadPayload) =>
     authSend<PremiumLeadResponse>('POST', '/premium/request-access', payload),
+  createCheckout: (payload: CheckoutPayload) =>
+    authSend<CheckoutResponse>('POST', '/premium/checkout', payload),
 
   // Alertas guardadas (plan Pro)
   createAlert: (payload: SavedAlertPayload) => authSend<SavedAlertItem>('POST', '/alerts', payload),

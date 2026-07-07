@@ -1,8 +1,11 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
 import { useMe } from '@/lib/useMe'
-import ProUpgradeCard from '@/components/ProUpgradeCard'
+import { api } from '@/lib/api'
 import { PREMIUM_ENABLED } from '@/lib/featureFlags'
 
 const PLAN_LABELS: Record<string, string> = {
@@ -12,6 +15,54 @@ const PLAN_LABELS: Record<string, string> = {
   canceled: 'Cancelado',
   expired: 'Expirado',
   none: 'Sin plan',
+}
+
+// Confirma la activación de un pago recién completado con Wompi. La fuente
+// de verdad es el webhook (ver src/api/routers/webhooks.py), que puede
+// tardar unos segundos frente al redirect — por eso se hace polling en vez
+// de confiar en que el plan ya cambió al volver.
+function CheckoutReturnBanner() {
+  const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+  const isReturn = searchParams.get('checkout') === 'return'
+
+  const [confirming, setConfirming] = useState(isReturn)
+  const [timedOut, setTimedOut] = useState(false)
+
+  useEffect(() => {
+    if (!isReturn) return
+    let tries = 0
+    const interval = setInterval(async () => {
+      tries += 1
+      const status = await api.premiumStatus().catch(() => null)
+      if (status?.is_pro) {
+        queryClient.invalidateQueries({ queryKey: ['me'] })
+        queryClient.invalidateQueries({ queryKey: ['premium-status'] })
+        setConfirming(false)
+        clearInterval(interval)
+      } else if (tries >= 8) {
+        setConfirming(false)
+        setTimedOut(true)
+        clearInterval(interval)
+      }
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [isReturn, queryClient])
+
+  if (!isReturn || (!confirming && !timedOut)) return null
+
+  return (
+    <div style={{
+      background: confirming ? 'var(--primary-weak)' : 'rgba(239,68,68,0.12)',
+      border: `1px solid ${confirming ? 'var(--primary)' : 'rgba(239,68,68,0.3)'}`,
+      borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 13.5,
+      color: confirming ? 'var(--primary)' : 'var(--danger)', fontWeight: 600,
+    }}>
+      {confirming
+        ? 'Confirmando tu pago…'
+        : 'Tu pago se está procesando, esto puede tardar un minuto — recarga la página.'}
+    </div>
+  )
 }
 
 export default function CuentaPage() {
@@ -55,6 +106,10 @@ export default function CuentaPage() {
     <main style={{ maxWidth: 640, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       <h1 style={{ margin: '0 0 24px', fontSize: 30, fontWeight: 800, color: 'var(--text)' }}>Mi cuenta</h1>
 
+      <Suspense fallback={null}>
+        <CheckoutReturnBanner />
+      </Suspense>
+
       <div style={{
         display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20,
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18,
@@ -93,7 +148,17 @@ export default function CuentaPage() {
             </span>
           </div>
 
-          {me?.plan !== 'pro' && <ProUpgradeCard />}
+          {me?.plan !== 'pro' && (
+            <Link
+              href="/premium"
+              style={{
+                display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
+                border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
+              }}
+            >
+              Ver planes y precios
+            </Link>
+          )}
         </>
       )}
     </main>

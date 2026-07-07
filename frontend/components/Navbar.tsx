@@ -189,7 +189,7 @@ export default function Navbar() {
                     </Link>
                     {PREMIUM_ENABLED && status && !status.is_pro && (
                       <Link
-                        href="/cuenta"
+                        href="/premium"
                         onClick={() => setMenuOpen(false)}
                         className="row-hover"
                         style={{ display: 'block', padding: '10px 14px', fontSize: 13, color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', borderTop: '1px solid var(--border)' }}

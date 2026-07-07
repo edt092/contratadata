@@ -1,9 +1,6 @@
 // Funcionalidades premium (alertas guardadas, monitor de competidores,
-// reportes, plan Pro) pausadas: estamos integrando pagos con Wompi y su API
-// todavía no está aprobada. Mientras tanto, ningún botón/link/página premium
-// debe ser visible ni alcanzable para usuarios que lleguen a contratadata.xyz.
-//
-// El código de estas features sigue completo (componentes, backend,
-// endpoints) — esto solo controla si se montan en la UI. Cambiar a `true`
-// cuando Wompi apruebe la integración para reactivar todo de una vez.
-export const PREMIUM_ENABLED = false
+// reportes, plan Pro) — reactivadas con cobros reales vía Wompi (ver
+// auth.md y src/api/routers/premium.py::create_checkout). Un solo flag
+// controla si se montan en la UI; ponerlo en `false` las oculta todas de
+// nuevo sin tocar el resto del código.
+export const PREMIUM_ENABLED = true
