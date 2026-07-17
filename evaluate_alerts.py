@@ -70,8 +70,8 @@ def run() -> None:
             count = _match_count(session, alert, since)
             if count:
                 logger.info(
-                    "Alerta #%d '%s' (%s): %d contrato(s) nuevo(s) desde %s.",
-                    alert.id, alert.name, alert.user_email, count, since.isoformat(),
+                    "Alerta #%d '%s' (user_id=%s): %d contrato(s) nuevo(s) desde %s.",
+                    alert.id, alert.name, alert.user_id, count, since.isoformat(),
                 )
             alert.last_checked_at = now
 

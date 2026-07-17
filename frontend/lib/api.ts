@@ -38,21 +38,13 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 
 const post = <T>(path: string, body: unknown) => send<T>('POST', path, body)
 
-// ── Llamadas autenticadas (Auth0) ─────────────────────────────────────────────
-// El access token vive en la cookie de sesión httpOnly del SDK de Auth0
-// (nunca localStorage, ver auth.md) — /api/token lo expone en memoria para
-// el request en curso, leído server-side desde esa cookie.
+// ── Llamadas autenticadas (Clerk) ───────────────────────────────────────────
+// El token nunca se persiste (ni localStorage ni cookie propia, ver
+// auth2.md) — cada llamada pide uno fresco vía getToken() de useAuth() de
+// Clerk (ver frontend/lib/useMe.ts y consumidores), que vive solo en
+// memoria para el request en curso.
 
-async function getAccessToken(): Promise<string | null> {
-  try {
-    const res = await fetch('/api/token')
-    if (!res.ok) return null
-    const data: { accessToken: string | null } = await res.json()
-    return data.accessToken
-  } catch {
-    return null
-  }
-}
+export type GetToken = () => Promise<string | null>
 
 function unauthenticatedError(path: string): ApiError {
   const err = new Error(`No autenticado — ${path}`) as ApiError
@@ -60,8 +52,8 @@ function unauthenticatedError(path: string): ApiError {
   return err
 }
 
-async function authSend<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const token = await getAccessToken()
+async function authSend<T>(getToken: GetToken, method: string, path: string, body?: unknown): Promise<T> {
+  const token = await getToken()
   if (!token) throw unauthenticatedError(path)
 
   const res = await fetch(`${API}${path}`, {
@@ -82,10 +74,10 @@ async function authSend<T>(method: string, path: string, body?: unknown): Promis
   return res.json()
 }
 
-const authGet = <T>(path: string) => authSend<T>('GET', path)
+const authGet = <T>(getToken: GetToken, path: string) => authSend<T>(getToken, 'GET', path)
 
-async function authGetBlob(path: string): Promise<{ blob: Blob; filename: string }> {
-  const token = await getAccessToken()
+async function authGetBlob(getToken: GetToken, path: string): Promise<{ blob: Blob; filename: string }> {
+  const token = await getToken()
   if (!token) throw unauthenticatedError(path)
 
   const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -246,13 +238,12 @@ export interface FeedbackResponse {
   reward_status: string
 }
 
-// ── Auth / Premium (ver auth.md) ─────────────────────────────────────────────
+// ── Auth / Premium (ver auth2.md) ────────────────────────────────────────────
 
 export type FeatureKey = 'saved_alerts' | 'competitor_monitor' | 'reports'
 
 export interface MeResponse {
   id: number
-  auth0_sub: string
   email: string | null
   name: string | null
   picture: string | null
@@ -308,7 +299,7 @@ export interface SavedAlertPayload {
 
 export interface SavedAlertItem {
   id: number
-  user_email: string
+  user_id: number
   name: string
   entidad: string | null
   contratista: string | null
@@ -331,7 +322,7 @@ export interface CompetitorPayload {
 
 export interface CompetitorItem {
   id: number
-  user_email: string
+  user_id: number
   supplier_name: string
   nickname: string | null
   is_active: boolean
@@ -400,30 +391,34 @@ export const api = {
   // Feedback de usuarios (user testing, sin login)
   submitFeedback: (payload: FeedbackPayload) => post<FeedbackResponse>('/feedback', payload),
 
-  // Auth / perfil (ver auth.md) — requieren sesión Auth0
-  me: () => authGet<MeResponse>('/me'),
-  premiumStatus: () => authGet<PremiumStatus>('/premium/status'),
-  requestProAccess: (payload: PremiumLeadPayload) =>
-    authSend<PremiumLeadResponse>('POST', '/premium/request-access', payload),
-  createCheckout: (payload: CheckoutPayload) =>
-    authSend<CheckoutResponse>('POST', '/premium/checkout', payload),
+  // Auth / perfil (ver auth2.md) — requieren sesión de Clerk, 'getToken' viene
+  // de useAuth() de @clerk/nextjs en cada hook/componente que llama esto.
+  me: (getToken: GetToken) => authGet<MeResponse>(getToken, '/me'),
+  premiumStatus: (getToken: GetToken) => authGet<PremiumStatus>(getToken, '/premium/status'),
+  requestProAccess: (getToken: GetToken, payload: PremiumLeadPayload) =>
+    authSend<PremiumLeadResponse>(getToken, 'POST', '/premium/request-access', payload),
+  createCheckout: (getToken: GetToken, payload: CheckoutPayload) =>
+    authSend<CheckoutResponse>(getToken, 'POST', '/premium/checkout', payload),
 
   // Alertas guardadas (plan Pro)
-  createAlert: (payload: SavedAlertPayload) => authSend<SavedAlertItem>('POST', '/alerts', payload),
-  listAlerts: () => authGet<SavedAlertItem[]>('/alerts'),
-  updateAlert: (id: number, payload: Partial<Pick<SavedAlertItem, 'name' | 'is_active' | 'frecuencia'>>) =>
-    authSend<SavedAlertItem>('PATCH', `/alerts/${id}`, payload),
-  deleteAlert: (id: number) => authSend<void>('DELETE', `/alerts/${id}`),
+  createAlert: (getToken: GetToken, payload: SavedAlertPayload) =>
+    authSend<SavedAlertItem>(getToken, 'POST', '/alerts', payload),
+  listAlerts: (getToken: GetToken) => authGet<SavedAlertItem[]>(getToken, '/alerts'),
+  updateAlert: (
+    getToken: GetToken, id: number, payload: Partial<Pick<SavedAlertItem, 'name' | 'is_active' | 'frecuencia'>>,
+  ) => authSend<SavedAlertItem>(getToken, 'PATCH', `/alerts/${id}`, payload),
+  deleteAlert: (getToken: GetToken, id: number) => authSend<void>(getToken, 'DELETE', `/alerts/${id}`),
 
   // Monitor de competidores (plan Pro)
-  followCompetitor: (payload: CompetitorPayload) => authSend<CompetitorItem>('POST', '/competitors', payload),
-  listCompetitors: () => authGet<CompetitorItem[]>('/competitors'),
-  unfollowCompetitor: (id: number) => authSend<void>('DELETE', `/competitors/${id}`),
+  followCompetitor: (getToken: GetToken, payload: CompetitorPayload) =>
+    authSend<CompetitorItem>(getToken, 'POST', '/competitors', payload),
+  listCompetitors: (getToken: GetToken) => authGet<CompetitorItem[]>(getToken, '/competitors'),
+  unfollowCompetitor: (getToken: GetToken, id: number) => authSend<void>(getToken, 'DELETE', `/competitors/${id}`),
 
   // Reportes Excel/PDF (plan Pro) — Blob vía fetch autenticado: un access
   // token en la URL (para navegación directa) quedaría en logs/historial.
-  downloadEntityReport: (nombre: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
-    authGetBlob(`/reports/entity/${encodeURIComponent(nombre)}.${format}`),
-  downloadContractorReport: (nombre: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
-    authGetBlob(`/reports/contractor/${encodeURIComponent(nombre)}.${format}`),
+  downloadEntityReport: (getToken: GetToken, nombre: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
+    authGetBlob(getToken, `/reports/entity/${encodeURIComponent(nombre)}.${format}`),
+  downloadContractorReport: (getToken: GetToken, nombre: string, format: 'xlsx' | 'pdf' = 'xlsx') =>
+    authGetBlob(getToken, `/reports/contractor/${encodeURIComponent(nombre)}.${format}`),
 }

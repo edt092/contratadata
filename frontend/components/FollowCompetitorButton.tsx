@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { useMe } from '@/lib/useMe'
@@ -12,14 +13,15 @@ interface FollowCompetitorButtonProps {
 }
 
 export default function FollowCompetitorButton({ supplierName }: FollowCompetitorButtonProps) {
-  const { isLoggedIn, auth0User } = useMe()
+  const { isLoggedIn, clerkUser } = useMe()
+  const { getToken } = useAuth()
   const { attempt, showPaywall, closePaywall, feature } = useFeatureGate('competitor_monitor')
   const queryClient = useQueryClient()
   const [busy, setBusy] = useState(false)
 
   const listQ = useQuery({
-    queryKey: ['my-competitors', auth0User?.sub],
-    queryFn: api.listCompetitors,
+    queryKey: ['my-competitors', clerkUser?.id],
+    queryFn: () => api.listCompetitors(getToken),
     enabled: isLoggedIn,
     retry: false,
   })
@@ -29,8 +31,8 @@ export default function FollowCompetitorButton({ supplierName }: FollowCompetito
   const follow = async () => {
     setBusy(true)
     try {
-      await api.followCompetitor({ supplier_name: supplierName })
-      queryClient.invalidateQueries({ queryKey: ['my-competitors', auth0User?.sub] })
+      await api.followCompetitor(getToken, { supplier_name: supplierName })
+      queryClient.invalidateQueries({ queryKey: ['my-competitors', clerkUser?.id] })
     } finally {
       setBusy(false)
     }
@@ -40,8 +42,8 @@ export default function FollowCompetitorButton({ supplierName }: FollowCompetito
     if (!existing) return
     setBusy(true)
     try {
-      await api.unfollowCompetitor(existing.id)
-      queryClient.invalidateQueries({ queryKey: ['my-competitors', auth0User?.sub] })
+      await api.unfollowCompetitor(getToken, existing.id)
+      queryClient.invalidateQueries({ queryKey: ['my-competitors', clerkUser?.id] })
     } finally {
       setBusy(false)
     }

@@ -170,9 +170,9 @@ def _validar_email_requerido(v: str) -> str:
     return v
 
 
-# ── Auth / Premium (ver auth.md) ─────────────────────────────────────────────
-# Auth0 resuelve la identidad (auth0_sub/email/name/picture); estos schemas
-# solo exponen qué plan tiene ese usuario según Neon (Subscription/
+# ── Auth / Premium (ver auth2.md) ────────────────────────────────────────────
+# Clerk resuelve la identidad (email/name/picture); estos schemas solo
+# exponen qué plan tiene ese usuario según Neon (Subscription/
 # PremiumEntitlement) — nunca al revés.
 
 Plan = Literal["free", "pro"]
@@ -182,7 +182,6 @@ FeatureKey = Literal["saved_alerts", "competitor_monitor", "reports"]
 
 class MeResponse(BaseModel):
     id: int
-    auth0_sub: str
     email: Optional[str]
     name: Optional[str]
     picture: Optional[str]
@@ -252,7 +251,7 @@ class SavedAlertItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    user_email: str
+    user_id: int
     name: str
     entidad: Optional[str]
     contratista: Optional[str]
@@ -279,7 +278,7 @@ class CompetitorItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    user_email: str
+    user_id: int
     supplier_name: str
     nickname: Optional[str]
     is_active: bool

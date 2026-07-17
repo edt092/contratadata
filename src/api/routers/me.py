@@ -1,10 +1,10 @@
-"""GET /api/me — perfil del usuario autenticado y su plan (ver auth.md)."""
+"""GET /api/me — perfil del usuario autenticado y su plan (ver auth2.md)."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_db, get_latest_subscription, is_pro_user, require_auth0_user
+from src.api.deps import get_db, get_latest_subscription, is_pro_user, require_authenticated_user
 from src.api.schemas import MeResponse
 from src.load.models import AppUser, PremiumEntitlement
 
@@ -26,12 +26,11 @@ def resolve_entitlements(db: Session, user: AppUser, pro: bool) -> dict[str, boo
 
 
 @router.get("", response_model=MeResponse)
-def me(user: AppUser = Depends(require_auth0_user), db: Session = Depends(get_db)) -> MeResponse:
+def me(user: AppUser = Depends(require_authenticated_user), db: Session = Depends(get_db)) -> MeResponse:
     pro = is_pro_user(db, user)
     sub = get_latest_subscription(db, user.id)
     return MeResponse(
         id=user.id,
-        auth0_sub=user.auth0_sub,
         email=user.email,
         name=user.name,
         picture=user.picture,

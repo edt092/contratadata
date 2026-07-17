@@ -2,8 +2,8 @@
 
 > **Superseded parcialmente** — este documento describe la primera versión
 > del MVP premium (acceso por email en `localStorage`, sin login real). Esa
-> capa de identidad fue reemplazada por autenticación real con Auth0 (ver
-> `auth.md` y `docs/auth0-setup.md`): `premium_users`/`admin_set_premium.py`
+> capa de identidad fue reemplazada primero por Auth0 y luego por Clerk (ver
+> `auth2.md` y `docs/clerk-setup.md`): `premium_users`/`admin_set_premium.py`
 > ya no existen, reemplazados por `app_users`+`subscriptions`
 > (`admin_set_pro.py`). Las 4 features (alertas, competidores, reportes,
 > plan Pro) y sus tablas `saved_alerts`/`competitor_watchlist`/`premium_leads`

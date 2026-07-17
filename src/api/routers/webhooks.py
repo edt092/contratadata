@@ -1,7 +1,8 @@
 """POST /api/webhooks/wompi — recibe los eventos de transacción de Wompi y
-activa el plan Pro (ver auth.md). Endpoint público (Wompi no manda un JWT de
-Auth0): la autenticidad se valida con el checksum de eventos, no con
-require_auth0_user."""
+activa el plan Pro (ver auth2.md). Endpoint público (Wompi no manda un
+session token de Clerk): la autenticidad se valida con el checksum de
+eventos, no con require_authenticated_user. Ver clerk_webhooks.py para los
+webhooks de identidad (user.created/updated/deleted)."""
 
 import logging
 from datetime import datetime, timedelta
