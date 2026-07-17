@@ -1,20 +1,29 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
-/* ── ContrataData theme (data-theme + dark class) ──────────────────────────── */
+/* ── ContrataData theme (data-theme + dark class) ──────────────────────────────
+   Misma paleta de marca que .marketing (esmeralda sobre fondo oscuro cálido)
+   — unificada acá para que /explorar y el resto del producto se vean
+   consistentes con la landing sin tener que renombrar ninguna variable en
+   los componentes que ya las consumen. */
 :root,
 .dark {
-  --bg: #0F1117;
-  --surface: #1A1F2E;
-  --surface2: #222838;
-  --border: #2A3040;
-  --primary: #3B82F6;
-  --primary-weak: rgba(59, 130, 246, 0.14);
+  --bg: #0A0F0D;
+  --surface: #101613;
+  --surface2: #161F1A;
+  --border: #1E2B24;
+  --primary: #16E8A0;
+  --primary-weak: rgba(22, 232, 160, 0.14);
+  /* #16E8A0 es un verde claro/brillante — texto blanco sobre --primary no
+     pasa contraste WCAG. --on-primary es el color de texto correcto para
+     usar sobre fondos --primary (no confundir con el --primary-foreground
+     HSL de shadcn, sin usar en la app). */
+  --on-primary: #04140E;
   --success: #10B981;
-  --warning: #F59E0B;
+  --warning: #F0B54C;
   --danger: #EF4444;
-  --text: #F1F5F9;
-  --muted: #94A3B8;
+  --text: #F4F8F5;
+  --muted: #92A69B;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 
   /* shadcn/ui variables (dark) */
@@ -42,17 +51,18 @@
 
 [data-theme='light'],
 :root:not(.dark) {
-  --bg: #F8FAFC;
+  --bg: #F7FAF8;
   --surface: #FFFFFF;
-  --surface2: #F1F5F9;
-  --border: #E2E8F0;
-  --primary: #1D4ED8;
-  --primary-weak: rgba(29, 78, 216, 0.10);
+  --surface2: #F0F5F2;
+  --border: #DCE6E0;
+  --primary: #0F9D6E;
+  --primary-weak: rgba(15, 157, 110, 0.10);
+  --on-primary: #FFFFFF;
   --success: #059669;
-  --warning: #D97706;
+  --warning: #B8791E;
   --danger: #DC2626;
-  --text: #0F172A;
-  --muted: #64748B;
+  --text: #10231B;
+  --muted: #5B6F65;
 
   /* shadcn/ui variables (light) */
   --background: 0 0% 100%;
@@ -110,18 +120,19 @@
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Paleta para gráficas y visualizaciones (orden de asignación por serie) */
-  --chart-1: #3B82F6;
-  --chart-2: #10B981;
-  --chart-3: #F59E0B;
+  /* Paleta para gráficas y visualizaciones (orden de asignación por serie,
+     esmeralda de marca primero) */
+  --chart-1: #16E8A0;
+  --chart-2: #4C8DFF;
+  --chart-3: #F0B54C;
   --chart-4: #A78BFA;
   --chart-5: #F472B6;
 }
 
-/* ── Design system: identidad de marca para marketing (Fase 2/4) ─────────────
-   Paleta emerald/verde eléctrico sobre fondo oscuro cálido, escopeada a
-   `.marketing` (el layout de app/(marketing)) para no alterar el azul del
-   dashboard/producto existente en /explorar y el resto de la app. */
+/* ── Design system: identidad de marca (Fase 2/4) ─────────────────────────────
+   Los mismos valores ya viven en :root/.dark arriba — .marketing queda como
+   alias redundante (no hace daño, solo evita tocar los componentes de
+   marketing que referencian var(--brand-*) directamente). */
 .marketing {
   --brand-bg: #0A0F0D;
   --brand-surface: #101613;
@@ -143,7 +154,7 @@
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { background: #0F1117; }
+html { background: #0A0F0D; }
 
 body {
   margin: 0;
@@ -156,7 +167,7 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-::selection { background: rgba(59, 130, 246, 0.3); }
+::selection { background: rgba(22, 232, 160, 0.3); }
 
 :focus-visible {
   outline: 2px solid var(--focus-ring);

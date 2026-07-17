@@ -35,7 +35,7 @@ const labelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   background: 'var(--surface2)',
   border: '1px solid var(--border)',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-sm)',
   padding: '9px 11px',
   fontSize: 13.5,
   color: 'var(--text)',
@@ -46,12 +46,12 @@ const inputStyle: React.CSSProperties = {
 
 const primaryBtnStyle: React.CSSProperties = {
   background: 'var(--primary)',
-  color: '#fff',
+  color: 'var(--on-primary)',
   border: 'none',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-sm)',
   padding: '10px 18px',
   fontSize: 13.5,
-  fontWeight: 600,
+  fontWeight: 700,
   cursor: 'pointer',
 }
 
@@ -140,7 +140,8 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
         style={{
           background: 'var(--surface)',
           border: '1px solid var(--border)',
-          borderRadius: 14,
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)',
           padding: 26,
           width: '100%',
           maxWidth: 460,
@@ -222,9 +223,9 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                       style={{
                         flex: 1,
                         background: importancia === i.value ? 'var(--primary)' : 'transparent',
-                        color: importancia === i.value ? '#fff' : 'var(--muted)',
+                        color: importancia === i.value ? 'var(--on-primary)' : 'var(--muted)',
                         border: `1px solid ${importancia === i.value ? 'var(--primary)' : 'var(--border)'}`,
-                        borderRadius: 8,
+                        borderRadius: 'var(--radius-sm)',
                         padding: '8px 0',
                         fontSize: 13,
                         fontWeight: 600,
@@ -244,7 +245,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
 
               {status === 'error' && (
                 <div style={{
-                  padding: '10px 12px', borderRadius: 8, fontSize: 13,
+                  padding: '10px 12px', borderRadius: 'var(--radius-sm)', fontSize: 13,
                   background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--danger)',
                 }}>
                   No pudimos enviar el feedback ahora. Intenta de nuevo en unos minutos.

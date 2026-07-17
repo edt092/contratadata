@@ -13,7 +13,7 @@ import { signInHref } from '@/lib/auth-links'
 import { PREMIUM_ENABLED } from '@/lib/featureFlags'
 
 const NAV = [
-  { label: 'Dashboard', href: '/' },
+  { label: 'Explorar', href: '/explorar' },
   { label: 'Sobre el proyecto', href: '/sobre' },
 ]
 
@@ -33,7 +33,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === '/' || pathname.startsWith('/entidad') || pathname.startsWith('/contratista') : pathname === href
+    href === '/explorar' ? pathname === '/explorar' || pathname.startsWith('/entidad') || pathname.startsWith('/contratista') : pathname === href
 
   const loginUrl = signInHref(pathname || '/')
 
@@ -43,11 +43,11 @@ export default function Navbar() {
       top: 0,
       zIndex: 60,
       background: 'color-mix(in srgb, var(--surface) 88%, transparent)',
-      backdropFilter: 'blur(10px)',
+      backdropFilter: 'blur(12px)',
       borderBottom: '1px solid var(--border)',
     }}>
       <div style={{
-        maxWidth: 1340,
+        maxWidth: 'var(--container-xl)',
         margin: '0 auto',
         padding: '0 28px',
         height: 60,
@@ -95,7 +95,7 @@ export default function Navbar() {
               fontSize: 12,
               fontWeight: 600,
               padding: '7px 11px',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-sm)',
               color: 'var(--primary)',
             }}
           >
@@ -116,7 +116,7 @@ export default function Navbar() {
               fontSize: 12,
               fontWeight: 600,
               padding: '7px 11px',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-sm)',
               color: 'var(--muted)',
             }}
           >
@@ -136,14 +136,14 @@ export default function Navbar() {
               href={loginUrl}
               style={{
                 marginLeft: 10,
-                background: 'linear-gradient(135deg, var(--primary), #8B5CF6)',
+                background: 'linear-gradient(135deg, var(--primary), var(--chart-2))',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '7px 14px',
-                borderRadius: 8,
-                color: '#fff',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--on-primary)',
                 textDecoration: 'none',
               }}
             >
@@ -156,7 +156,7 @@ export default function Navbar() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   background: 'var(--surface2)', border: '1px solid var(--border)',
-                  borderRadius: 8, padding: '5px 10px 5px 5px', cursor: 'pointer',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 10px 5px 5px', cursor: 'pointer',
                 }}
               >
                 {clerkUser?.imageUrl ? (
@@ -169,9 +169,9 @@ export default function Navbar() {
                 </span>
                 {PREMIUM_ENABLED && status?.is_pro && (
                   <span style={{
-                    fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', color: '#fff',
-                    background: 'linear-gradient(135deg, var(--primary), #8B5CF6)',
-                    borderRadius: 5, padding: '2px 6px',
+                    fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', color: 'var(--on-primary)',
+                    background: 'linear-gradient(135deg, var(--primary), var(--chart-2))',
+                    borderRadius: 'var(--radius-sm)', padding: '2px 6px',
                   }}>
                     PRO
                   </span>
@@ -183,8 +183,8 @@ export default function Navbar() {
                   <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
                   <div style={{
                     position: 'absolute', top: '110%', right: 0, zIndex: 100,
-                    background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.2)', overflow: 'hidden', minWidth: 180,
+                    background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)', overflow: 'hidden', minWidth: 180,
                   }}>
                     <Link
                       href="/cuenta"

@@ -44,7 +44,7 @@ export default function ExportReportButton({ kind, nombre }: ExportReportButtonP
           background: 'var(--surface2)',
           color: 'var(--text)',
           border: '1px solid var(--border)',
-          borderRadius: 8,
+          borderRadius: 'var(--radius-sm)',
           padding: '9px 14px',
           fontSize: 13,
           fontWeight: 600,
@@ -60,8 +60,8 @@ export default function ExportReportButton({ kind, nombre }: ExportReportButtonP
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
           <div style={{
             position: 'absolute', top: '110%', right: 0, zIndex: 100,
-            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)', overflow: 'hidden', minWidth: 140,
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-md)', overflow: 'hidden', minWidth: 140,
           }}>
             <button
               onClick={() => download('xlsx')}

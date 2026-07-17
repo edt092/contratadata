@@ -6,7 +6,7 @@ export default function FuenteBadge({ fuente }: { fuente: string }) {
     <span style={{
       display: 'inline-block',
       padding: '3px 9px',
-      borderRadius: 6,
+      borderRadius: 'var(--radius-sm)',
       fontSize: 11.5,
       fontWeight: 600,
       fontFamily: 'var(--font-mono)',

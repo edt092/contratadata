@@ -19,8 +19,8 @@ export default function ProUpgradeCard({ feature }: ProUpgradeCardProps) {
 
   return (
     <div style={{
-      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-      padding: '24px 22px',
+      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-sm)', padding: '24px 22px',
     }}>
       <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>
         ContrataData Pro
@@ -31,7 +31,7 @@ export default function ProUpgradeCard({ feature }: ProUpgradeCardProps) {
 
       <div style={{
         display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 16,
-        padding: '10px 14px', borderRadius: 8, background: 'var(--primary-weak)',
+        padding: '10px 14px', borderRadius: 'var(--radius-sm)', background: 'var(--primary-weak)',
       }}>
         <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)' }}>COP $149.000</span>
         <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>/mes · o ahorra con el plan anual</span>
@@ -44,8 +44,8 @@ export default function ProUpgradeCard({ feature }: ProUpgradeCardProps) {
       <Link
         href={href}
         style={{
-          display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
-          border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
+          display: 'inline-block', background: 'var(--primary)', color: 'var(--on-primary)', textDecoration: 'none',
+          border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 18px', fontSize: 13.5, fontWeight: 700,
         }}
       >
         Ver planes y precios

@@ -11,11 +11,12 @@ export default function KPICard({ label, value, sub, subColor, accentColor }: KP
     <div style={{
       background: 'var(--surface)',
       border: '1px solid var(--border)',
-      borderRadius: 12,
-      padding: '18px 18px 16px',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-sm)',
+      padding: '20px 20px 18px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <span style={{ width: 9, height: 9, borderRadius: 2, background: accentColor, flexShrink: 0 }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: accentColor, flexShrink: 0 }} />
         <span style={{
           fontSize: 11,
           fontWeight: 600,
@@ -28,9 +29,9 @@ export default function KPICard({ label, value, sub, subColor, accentColor }: KP
         </span>
       </div>
       <div style={{
-        fontSize: 38,
-        fontWeight: 800,
-        letterSpacing: '-0.03em',
+        fontSize: 34,
+        fontWeight: 700,
+        letterSpacing: '-0.02em',
         lineHeight: 1,
         color: 'var(--text)',
         fontVariantNumeric: 'tabular-nums',

@@ -30,8 +30,8 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
   if (!isLoggedIn) {
     return (
       <div style={{
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-        padding: '56px 20px', textAlign: 'center',
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)', padding: '56px 20px', textAlign: 'center',
       }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
           Inicia sesión para usar funciones premium
@@ -42,8 +42,8 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
         <a
           href={signInHref(pathname || '/')}
           style={{
-            display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
-            border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
+            display: 'inline-block', background: 'var(--primary)', color: 'var(--on-primary)', textDecoration: 'none',
+            border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 18px', fontSize: 13.5, fontWeight: 700,
           }}
         >
           Iniciar sesión

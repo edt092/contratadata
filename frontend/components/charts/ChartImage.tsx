@@ -41,7 +41,7 @@ export default function ChartImage({ src, alt, title, subtitle }: Props) {
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             minHeight: 180, color: 'var(--muted)', fontSize: 13,
-            border: '1px dashed var(--border)', borderRadius: 10,
+            border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)',
           }}>
             No se pudo cargar esta gráfica.
           </div>
@@ -53,7 +53,7 @@ export default function ChartImage({ src, alt, title, subtitle }: Props) {
             onError={() => setStatus('error')}
             style={{
               maxWidth: '100%', display: status === 'loaded' ? 'block' : 'none',
-              margin: '0 auto', borderRadius: 8,
+              margin: '0 auto', borderRadius: 'var(--radius-sm)',
             }}
           />
         )}

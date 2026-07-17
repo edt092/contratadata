@@ -58,7 +58,7 @@ function CheckoutReturnBanner() {
     <div style={{
       background: confirming ? 'var(--primary-weak)' : 'rgba(239,68,68,0.12)',
       border: `1px solid ${confirming ? 'var(--primary)' : 'rgba(239,68,68,0.3)'}`,
-      borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 13.5,
+      borderRadius: 'var(--radius-lg)', padding: '14px 16px', marginBottom: 20, fontSize: 13.5,
       color: confirming ? 'var(--primary)' : 'var(--danger)', fontWeight: 600,
     }}>
       {confirming
@@ -74,7 +74,7 @@ export default function CuentaPage() {
 
   if (isLoading) {
     return (
-      <main style={{ maxWidth: 640, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+      <main style={{ maxWidth: 'var(--container-xs)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
         <div style={{ color: 'var(--muted)', fontSize: 14 }}>Cargando…</div>
       </main>
     )
@@ -82,11 +82,11 @@ export default function CuentaPage() {
 
   if (!isLoggedIn) {
     return (
-      <main style={{ maxWidth: 640, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+      <main style={{ maxWidth: 'var(--container-xs)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
         <h1 style={{ margin: '0 0 16px', fontSize: 30, fontWeight: 800, color: 'var(--text)' }}>Mi cuenta</h1>
         <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-          padding: '56px 20px', textAlign: 'center',
+          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)', padding: '56px 20px', textAlign: 'center',
         }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>
             Inicia sesión para ver tu cuenta
@@ -94,8 +94,8 @@ export default function CuentaPage() {
           <a
             href={signInHref(pathname || '/cuenta')}
             style={{
-              display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
-              border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
+              display: 'inline-block', background: 'var(--primary)', color: 'var(--on-primary)', textDecoration: 'none',
+              border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 18px', fontSize: 13.5, fontWeight: 700,
             }}
           >
             Iniciar sesión
@@ -115,7 +115,8 @@ export default function CuentaPage() {
 
       <div style={{
         display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20,
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18,
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)', padding: 18,
       }}>
         {clerkUser?.imageUrl ? (
           <img src={clerkUser.imageUrl} alt="" width={48} height={48} style={{ borderRadius: '50%', display: 'block' }} />
@@ -131,7 +132,8 @@ export default function CuentaPage() {
       {PREMIUM_ENABLED && (
         <>
           <div style={{
-            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18, marginBottom: 20,
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-sm)', padding: 18, marginBottom: 20,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
             <div>
@@ -143,9 +145,9 @@ export default function CuentaPage() {
               </div>
             </div>
             <span style={{
-              fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 8,
+              fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 'var(--radius-sm)',
               color: me?.plan === 'pro' ? 'var(--success)' : 'var(--muted)',
-              background: me?.plan === 'pro' ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
+              background: me?.plan === 'pro' ? 'color-mix(in srgb, var(--success) 15%, transparent)' : 'var(--surface2)',
             }}>
               {PLAN_LABELS[me?.premium_status ?? 'none']}
             </span>
@@ -155,8 +157,8 @@ export default function CuentaPage() {
             <Link
               href="/premium"
               style={{
-                display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
-                border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
+                display: 'inline-block', background: 'var(--primary)', color: 'var(--on-primary)', textDecoration: 'none',
+                border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 18px', fontSize: 13.5, fontWeight: 700,
               }}
             >
               Ver planes y precios

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { use, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { BarList } from '@tremor/react'
@@ -36,8 +36,8 @@ const thStyle: React.CSSProperties = {
   borderBottom: '1px solid var(--border)', textAlign: 'left', whiteSpace: 'nowrap',
 }
 
-export default function ContratistaPage({ params }: { params: { slug: string } }) {
-  const { slug } = params
+export default function ContratistaPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
   const router = useRouter()
   const name = decodeURIComponent(slug)
   const [page, setPage] = useState(1)
@@ -96,7 +96,7 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
   const totalItems = contracts?.total ?? 0
 
   return (
-    <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+    <main style={{ maxWidth: 'var(--container-xl)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       <button
         onClick={() => router.back()}
         className="btn-link"
@@ -131,7 +131,7 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
           { label: 'Valor total obtenido', value: summaryQ.isLoading ? '—' : fmtAbbr(summary?.valor_total ?? 0), sub: summary ? fmtCOP(summary.valor_total) : '' },
           { label: 'Entidades cliente', value: summaryQ.isLoading ? '—' : fmtInt(summary?.entidades_unicas ?? 0) },
         ].map(k => (
-          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18 }}>
+          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 18 }}>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>
               {k.label}
             </div>
@@ -145,7 +145,7 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
 
       {/* Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16, marginBottom: 26 }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Entidades con las que más contrata</div>
           {topEntQ.isLoading
             ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
@@ -153,12 +153,12 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
                 data={topEntData}
                 valueFormatter={(v: number) => fmtAbbr(v)}
                 onValueChange={item => router.push(`/entidad/${encodeURIComponent(item.name)}`)}
-                color="blue"
+                color="emerald"
               />
           }
         </div>
 
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Estados de sus contratos</div>
           {byEstadoQ.isLoading
             ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
@@ -181,7 +181,7 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                   {donut.map(d => (
                     <div key={d.estado} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 3, background: d.color, display: 'block' }} />
+                      <span style={{ width: 10, height: 10, borderRadius: 'var(--radius-sm)', background: d.color, display: 'block' }} />
                       <span style={{ fontSize: 12.5, color: 'var(--text)' }}>{d.estado}</span>
                       <span style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>
                         {d.count} ({d.pct}%)
@@ -196,7 +196,7 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
       </div>
 
       {/* Table */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <span style={{ fontSize: 13, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
             {contractsQ.isLoading ? 'Cargando…' : `${fmtInt(totalItems)} contratos`}

@@ -61,8 +61,8 @@ function AlertsList() {
   if (!alertsQ.data || alertsQ.data.length === 0) {
     return (
       <div style={{
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-        padding: '56px 20px', textAlign: 'center',
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)', padding: '56px 20px', textAlign: 'center',
       }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
           Aún no tienes alertas guardadas
@@ -75,7 +75,7 @@ function AlertsList() {
   }
 
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
           <thead>
@@ -101,9 +101,9 @@ function AlertsList() {
                   <button
                     onClick={() => toggleActive(a)}
                     style={{
-                      background: a.is_active ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
+                      background: a.is_active ? 'color-mix(in srgb, var(--success) 15%, transparent)' : 'var(--surface2)',
                       color: a.is_active ? 'var(--success)' : 'var(--muted)',
-                      border: '1px solid var(--border)', borderRadius: 8,
+                      border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
                       padding: '6px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                     }}
                   >
@@ -126,7 +126,7 @@ function AlertsList() {
 
 export default function AlertasPage() {
   return (
-    <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+    <main style={{ maxWidth: 'var(--container-xl)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--text)' }}>
           Mis alertas

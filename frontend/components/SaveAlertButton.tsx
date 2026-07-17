@@ -15,7 +15,7 @@ type Status = 'idle' | 'guardando' | 'guardado' | 'error'
 const inputStyle: React.CSSProperties = {
   background: 'var(--surface2)',
   border: '1px solid var(--border)',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-sm)',
   padding: '9px 11px',
   fontSize: 13.5,
   color: 'var(--text)',
@@ -69,7 +69,7 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
           background: 'var(--surface2)',
           color: 'var(--text)',
           border: '1px solid var(--border)',
-          borderRadius: 8,
+          borderRadius: 'var(--radius-sm)',
           padding: '10px 14px',
           fontSize: 13.5,
           fontWeight: 600,
@@ -92,8 +92,8 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
             onClick={e => e.stopPropagation()}
             className="animate-fade"
             style={{
-              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14,
-              padding: 24, width: '100%', maxWidth: 400,
+              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)', padding: 24, width: '100%', maxWidth: 400,
             }}
           >
             <h3 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>
@@ -134,9 +134,9 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
                         style={{
                           flex: 1,
                           background: frecuencia === f ? 'var(--primary)' : 'transparent',
-                          color: frecuencia === f ? '#fff' : 'var(--muted)',
+                          color: frecuencia === f ? 'var(--on-primary)' : 'var(--muted)',
                           border: `1px solid ${frecuencia === f ? 'var(--primary)' : 'var(--border)'}`,
-                          borderRadius: 8, padding: '8px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                          borderRadius: 'var(--radius-sm)', padding: '8px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                         }}
                       >
                         {f === 'daily' ? 'Diaria' : 'Semanal'}
@@ -147,7 +147,7 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
 
                 {status === 'error' && (
                   <div style={{
-                    padding: '10px 12px', borderRadius: 8, fontSize: 13,
+                    padding: '10px 12px', borderRadius: 'var(--radius-sm)', fontSize: 13,
                     background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--danger)',
                   }}>
                     No pudimos guardar la alerta. Intenta de nuevo.
@@ -158,8 +158,8 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
                   onClick={save}
                   disabled={name.trim().length < 1 || status === 'guardando'}
                   style={{
-                    background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8,
-                    padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
+                    background: 'var(--primary)', color: 'var(--on-primary)', border: 'none', borderRadius: 'var(--radius-sm)',
+                    padding: '10px 18px', fontSize: 13.5, fontWeight: 700,
                     cursor: name.trim().length < 1 || status === 'guardando' ? 'not-allowed' : 'pointer',
                     opacity: name.trim().length < 1 || status === 'guardando' ? 0.6 : 1,
                   }}

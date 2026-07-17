@@ -63,10 +63,10 @@ export default function FollowCompetitorButton({ supplierName }: FollowCompetito
         onClick={handleClick}
         disabled={busy}
         style={{
-          background: existing ? 'rgba(16,185,129,0.15)' : 'var(--surface2)',
+          background: existing ? 'color-mix(in srgb, var(--success) 15%, transparent)' : 'var(--surface2)',
           color: existing ? 'var(--success)' : 'var(--text)',
           border: '1px solid var(--border)',
-          borderRadius: 8,
+          borderRadius: 'var(--radius-sm)',
           padding: '9px 14px',
           fontSize: 13,
           fontWeight: 600,

@@ -33,7 +33,7 @@ export default function CalidadChart({ data }: Props) {
         data={chartData}
         index="motivo"
         categories={['SECOP', 'datos.gov.co']}
-        colors={['blue', 'violet']}
+        colors={['emerald', 'amber']}
         valueFormatter={(v: number) => String(v)}
         showAnimation
         className="h-56 mt-2"
