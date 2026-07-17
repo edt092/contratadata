@@ -41,7 +41,7 @@ export default function CompetitorCard({ competitor }: CompetitorCardProps) {
   const topEntData = (topEntQ.data ?? []).slice(0, 5).map(e => ({ name: e.nombre, value: e.valor_total }))
 
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 20 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
@@ -78,7 +78,7 @@ export default function CompetitorCard({ competitor }: CompetitorCardProps) {
         <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 14 }}>Sin datos.</div>
       ) : (
         <div style={{ marginBottom: 14 }}>
-          <BarList data={topEntData} valueFormatter={fmtAbbr} color="blue" />
+          <BarList data={topEntData} valueFormatter={fmtAbbr} color="emerald" />
         </div>
       )}
 
@@ -87,7 +87,7 @@ export default function CompetitorCard({ competitor }: CompetitorCardProps) {
           const s = estadoStyle(e.estado)
           return (
             <span key={e.estado} style={{
-              fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 6,
+              fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 'var(--radius-sm)',
               color: s.fg, background: s.bg,
             }}>
               {e.estado} · {e.cantidad}

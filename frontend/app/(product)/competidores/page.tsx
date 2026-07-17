@@ -23,8 +23,8 @@ function CompetitorsList() {
   if (!competitorsQ.data || competitorsQ.data.length === 0) {
     return (
       <div style={{
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-        padding: '56px 20px', textAlign: 'center',
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)', padding: '56px 20px', textAlign: 'center',
       }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
           Aún no sigues ningún competidor
@@ -47,7 +47,7 @@ function CompetitorsList() {
 
 export default function CompetidoresPage() {
   return (
-    <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+    <main style={{ maxWidth: 'var(--container-xl)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--text)' }}>
           Monitor de competidores

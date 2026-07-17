@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { use, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { BarList } from '@tremor/react'
@@ -38,8 +38,8 @@ const thStyle: React.CSSProperties = {
   borderBottom: '1px solid var(--border)', textAlign: 'left', whiteSpace: 'nowrap',
 }
 
-export default function EntidadPage({ params }: { params: { slug: string } }) {
-  const { slug } = params
+export default function EntidadPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
   const router = useRouter()
   const { theme } = useTheme()
   const name = decodeURIComponent(slug)
@@ -71,7 +71,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
   const totalItems = contracts?.total ?? 0
 
   return (
-    <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+    <main style={{ maxWidth: 'var(--container-xl)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       <button
         onClick={() => router.back()}
         className="btn-link"
@@ -86,7 +86,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
           {summary?.sigla && (
             <span style={{
               fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--primary)',
-              background: 'var(--primary-weak)', borderRadius: 7, padding: '6px 10px', marginTop: 6, whiteSpace: 'nowrap',
+              background: 'var(--primary-weak)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', marginTop: 6, whiteSpace: 'nowrap',
             }}>
               {summary.sigla}
             </span>
@@ -110,7 +110,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
           { label: 'Valor total', value: summaryQ.isLoading ? '—' : fmtAbbr(summary?.valor_total ?? 0), sub: summary ? fmtCOP(summary.valor_total) : '' },
           { label: 'Contratistas únicos', value: summaryQ.isLoading ? '—' : fmtInt(summary?.contratistas_unicos ?? 0) },
         ].map(k => (
-          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18 }}>
+          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 18 }}>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>
               {k.label}
             </div>
@@ -123,7 +123,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
       </div>
 
       {/* Principales contratistas */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 20, marginBottom: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Principales contratistas</div>
         {topConQ.isLoading
           ? <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
@@ -131,18 +131,18 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
               data={topConData}
               valueFormatter={(v: number) => fmtAbbr(v)}
               onValueChange={item => router.push(`/contratista/${encodeURIComponent(item.name)}`)}
-              color="blue"
+              color="emerald"
             />
         }
       </div>
 
       {/* Evolución de gasto por mes */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 26 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 20, marginBottom: 26 }}>
         <EvolucionChart theme={theme} entidad={name} />
       </div>
 
       {/* Boxenplot de valores por estado */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 26 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 20, marginBottom: 26 }}>
         <ChartImage
           src={api.imageUrl('/charts/images/entity-boxenplot.png', { theme, entidad: name })}
           alt={`Distribución de valores de contratos por estado — ${name}`}
@@ -152,7 +152,7 @@ export default function EntidadPage({ params }: { params: { slug: string } }) {
       </div>
 
       {/* Table */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <span style={{ fontSize: 13, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
             {contractsQ.isLoading ? 'Cargando…' : `${fmtInt(totalItems)} contratos`}

@@ -159,7 +159,7 @@ export default function DashboardPage() {
   const hasError = statsQ.isError || contractsQ.isError
 
   return (
-    <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+    <main style={{ maxWidth: 'var(--container-xl)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
       {/* Error banner */}
       {hasError && (
         <div style={{
-          marginBottom: 20, padding: '14px 18px', borderRadius: 10,
+          marginBottom: 20, padding: '14px 18px', borderRadius: 'var(--radius-md)',
           background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
           color: 'var(--danger)', fontSize: 13.5,
         }}>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           label="Contratistas"
           value={isLoading ? '—' : fmtInt(stats?.contratistas_unicos ?? 0)}
           sub="proveedores únicos"
-          accentColor="#8B5CF6"
+          accentColor="var(--chart-4)"
         />
       </div>
 
@@ -258,7 +258,8 @@ export default function DashboardPage() {
         marginTop: 28,
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
         overflow: 'hidden',
       }}>
         <div style={{
@@ -271,9 +272,9 @@ export default function DashboardPage() {
               onClick={() => setChartTab(t.key)}
               style={{
                 background: chartTab === t.key ? 'var(--primary)' : 'transparent',
-                color: chartTab === t.key ? '#fff' : 'var(--muted)',
+                color: chartTab === t.key ? 'var(--on-primary)' : 'var(--muted)',
                 border: `1px solid ${chartTab === t.key ? 'var(--primary)' : 'var(--border)'}`,
-                borderRadius: 8, padding: '8px 14px', fontSize: 13,
+                borderRadius: 'var(--radius-sm)', padding: '8px 14px', fontSize: 13,
                 fontWeight: 600, cursor: 'pointer',
               }}
             >

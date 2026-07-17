@@ -38,9 +38,12 @@ export const metadata: Metadata = {
   },
 }
 
+// ThemeProvider arranca en 'dark' y no persiste preferencia — la clase ya
+// nace puesta en el HTML del servidor para que no haya un flash de tema
+// claro antes de que el efecto de ThemeProvider monte en cliente.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" suppressHydrationWarning className={`${inter.variable} ${mono.variable} ${serif.variable}`}>
+    <html lang="es" suppressHydrationWarning className={`${inter.variable} ${mono.variable} ${serif.variable} dark`}>
       <body>
         <ClerkProvider>
           <QueryProvider>

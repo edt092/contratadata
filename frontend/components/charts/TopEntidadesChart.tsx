@@ -28,7 +28,7 @@ export default function TopEntidadesChart({ items, onItemClick }: Props) {
         data={data}
         valueFormatter={(v: number) => fmtAbbr(v)}
         onValueChange={onItemClick ? item => onItemClick(item.name) : undefined}
-        color="blue"
+        color="emerald"
         className="mt-2"
       />
     </div>

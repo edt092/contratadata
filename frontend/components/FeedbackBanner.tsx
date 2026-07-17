@@ -14,7 +14,7 @@ export default function FeedbackBanner() {
       flexWrap: 'wrap',
       marginBottom: 24,
       padding: '14px 18px',
-      borderRadius: 12,
+      borderRadius: 'var(--radius-lg)',
       background: 'var(--primary-weak)',
       border: '1px solid var(--border)',
     }}>
@@ -30,12 +30,12 @@ export default function FeedbackBanner() {
         onClick={openFeedback}
         style={{
           background: 'var(--primary)',
-          color: '#fff',
+          color: 'var(--on-primary)',
           border: 'none',
-          borderRadius: 8,
+          borderRadius: 'var(--radius-sm)',
           padding: '9px 16px',
           fontSize: 13,
-          fontWeight: 600,
+          fontWeight: 700,
           cursor: 'pointer',
           flexShrink: 0,
         }}

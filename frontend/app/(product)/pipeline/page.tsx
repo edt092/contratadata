@@ -42,7 +42,7 @@ export default function PipelinePage() {
   ]
 
   return (
-    <main style={{ maxWidth: 1340, margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
+    <main style={{ maxWidth: 'var(--container-xl)', margin: '0 auto', padding: '32px 28px 80px' }} className="animate-fade">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
         <div>
@@ -55,14 +55,15 @@ export default function PipelinePage() {
         </div>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px',
+          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-sm)', padding: '10px 14px',
         }}>
           <span
             className="animate-pulse-dot"
             style={{
               width: 9, height: 9, borderRadius: '50%',
               background: dbOk === null ? 'var(--muted)' : dbOk ? 'var(--success)' : 'var(--danger)',
-              boxShadow: dbOk ? '0 0 0 4px rgba(16,185,129,.18)' : 'none',
+              boxShadow: dbOk ? '0 0 0 4px color-mix(in srgb, var(--success) 18%, transparent)' : 'none',
               display: 'block',
             }}
           />
@@ -80,7 +81,7 @@ export default function PipelinePage() {
       {/* Error banner */}
       {statusQ.isError && (
         <div style={{
-          marginBottom: 20, padding: '14px 18px', borderRadius: 10,
+          marginBottom: 20, padding: '14px 18px', borderRadius: 'var(--radius-md)',
           background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
           color: 'var(--danger)', fontSize: 13.5,
         }}>
@@ -92,7 +93,7 @@ export default function PipelinePage() {
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
         {kpis.map(k => (
-          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18 }}>
+          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 18 }}>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>
               {k.label}
             </div>
@@ -104,7 +105,7 @@ export default function PipelinePage() {
       </div>
 
       {/* Runs history */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', marginBottom: 24 }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
           Historial de corridas del pipeline
         </div>
@@ -138,7 +139,7 @@ export default function PipelinePage() {
                   </td>
                   <td style={{ padding: '13px 18px' }}>
                     <span style={{
-                      display: 'inline-block', padding: '3px 9px', borderRadius: 6,
+                      display: 'inline-block', padding: '3px 9px', borderRadius: 'var(--radius-sm)',
                       fontSize: 11.5, fontWeight: 600, fontFamily: 'var(--font-mono)',
                       color: meta.color, background: `${meta.color}26`,
                     }}>
@@ -172,7 +173,7 @@ export default function PipelinePage() {
       </div>
 
       {/* Rejects Table */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
           Registros rechazados por motivo y fuente
         </div>
@@ -201,7 +202,7 @@ export default function PipelinePage() {
                   </td>
                   <td style={{ padding: '13px 18px' }}>
                     <span style={{
-                      display: 'inline-block', padding: '3px 9px', borderRadius: 6,
+                      display: 'inline-block', padding: '3px 9px', borderRadius: 'var(--radius-sm)',
                       fontSize: 11.5, fontWeight: 600, fontFamily: 'var(--font-mono)',
                       color: fu.fg, background: fu.bg,
                     }}>
@@ -209,8 +210,8 @@ export default function PipelinePage() {
                     </span>
                   </td>
                   <td style={{ padding: '13px 18px', width: '45%' }}>
-                    <span style={{ height: 9, background: 'var(--surface2)', borderRadius: 5, display: 'block', overflow: 'hidden', maxWidth: 340 }}>
-                      <span style={{ display: 'block', height: '100%', background: 'var(--danger)', borderRadius: 5, width: `${pct}%`, opacity: 0.8 }} />
+                    <span style={{ height: 9, background: 'var(--surface2)', borderRadius: 'var(--radius-full)', display: 'block', overflow: 'hidden', maxWidth: 340 }}>
+                      <span style={{ display: 'block', height: '100%', background: 'var(--danger)', borderRadius: 'var(--radius-full)', width: `${pct}%`, opacity: 0.8 }} />
                     </span>
                   </td>
                   <td style={{ padding: '13px 18px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text)' }}>

@@ -20,7 +20,7 @@ interface FilterBarProps {
 const inputStyle: React.CSSProperties = {
   background: 'var(--surface2)',
   border: '1px solid var(--border)',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-sm)',
   padding: '9px 11px',
   fontSize: 13.5,
   color: 'var(--text)',
@@ -59,7 +59,8 @@ export default function FilterBar({
         flexWrap: 'wrap',
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
         padding: 14,
       }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 5, flex: 1, minWidth: 190 }}>
@@ -110,12 +111,12 @@ export default function FilterBar({
           onClick={onApply}
           style={{
             background: 'var(--primary)',
-            color: '#fff',
+            color: 'var(--on-primary)',
             border: 'none',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-sm)',
             padding: '10px 18px',
             fontSize: 13.5,
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: 'pointer',
           }}
         >
@@ -128,7 +129,7 @@ export default function FilterBar({
             background: 'transparent',
             color: 'var(--muted)',
             border: '1px solid var(--border)',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-sm)',
             padding: '10px 14px',
             fontSize: 13.5,
             fontWeight: 600,

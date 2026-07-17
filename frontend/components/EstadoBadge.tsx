@@ -8,7 +8,7 @@ export default function EstadoBadge({ estado }: { estado: string }) {
       alignItems: 'center',
       gap: 6,
       padding: '3px 9px',
-      borderRadius: 999,
+      borderRadius: 'var(--radius-full)',
       fontSize: 12,
       fontWeight: 600,
       color: fg,
