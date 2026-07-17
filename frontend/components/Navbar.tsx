@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useClerk } from '@clerk/nextjs'
 import { useTheme } from '@/lib/theme-context'
 import { useFeedback } from '@/lib/feedback-context'
 import { useMe } from '@/lib/useMe'
 import { usePremiumStatus } from '@/lib/usePremiumStatus'
+import { signInHref } from '@/lib/auth-links'
 import { PREMIUM_ENABLED } from '@/lib/featureFlags'
 
 const NAV = [
@@ -24,14 +27,15 @@ export default function Navbar() {
   const pathname = usePathname()
   const { theme, toggleTheme } = useTheme()
   const { openFeedback } = useFeedback()
-  const { auth0User, isLoggedIn, isLoading } = useMe()
+  const { clerkUser, isLoggedIn, isLoading } = useMe()
   const { status } = usePremiumStatus()
+  const { signOut } = useClerk()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' || pathname.startsWith('/entidad') || pathname.startsWith('/contratista') : pathname === href
 
-  const loginUrl = `/api/auth/login?returnTo=${encodeURIComponent(pathname || '/')}`
+  const loginUrl = signInHref(pathname || '/')
 
   return (
     <header style={{
@@ -58,7 +62,7 @@ export default function Navbar() {
           gap: 10,
           textDecoration: 'none',
         }}>
-          <img src="/favicon.svg" alt="ContrataData" width="40" height="27" style={{ display: 'block' }} />
+          <Image src="/favicon.svg" alt="ContrataData" width={40} height={27} priority style={{ display: 'block' }} />
           <span style={{
             fontWeight: 800,
             fontSize: 17,
@@ -155,13 +159,13 @@ export default function Navbar() {
                   borderRadius: 8, padding: '5px 10px 5px 5px', cursor: 'pointer',
                 }}
               >
-                {auth0User?.picture ? (
-                  <img src={auth0User.picture} alt="" width={22} height={22} style={{ borderRadius: '50%', display: 'block' }} />
+                {clerkUser?.imageUrl ? (
+                  <img src={clerkUser.imageUrl} alt="" width={22} height={22} style={{ borderRadius: '50%', display: 'block' }} />
                 ) : (
                   <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--primary)', display: 'block' }} />
                 )}
                 <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {auth0User?.name || auth0User?.email}
+                  {clerkUser?.fullName || clerkUser?.primaryEmailAddress?.emailAddress}
                 </span>
                 {PREMIUM_ENABLED && status?.is_pro && (
                   <span style={{
@@ -200,13 +204,17 @@ export default function Navbar() {
                         Actualizar a Pro
                       </Link>
                     )}
-                    <a
-                      href="/api/auth/logout"
+                    <button
+                      onClick={() => signOut({ redirectUrl: '/' })}
                       className="row-hover"
-                      style={{ display: 'block', padding: '10px 14px', fontSize: 13, color: 'var(--danger)', textDecoration: 'none', borderTop: '1px solid var(--border)' }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left', background: 'transparent',
+                        border: 'none', padding: '10px 14px', fontSize: 13, color: 'var(--danger)',
+                        cursor: 'pointer', borderTop: '1px solid var(--border)',
+                      }}
                     >
                       Cerrar sesión
-                    </a>
+                    </button>
                   </div>
                 </>
               )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { useMe } from '@/lib/useMe'
@@ -7,11 +8,12 @@ import PremiumGate from '@/components/PremiumGate'
 import CompetitorCard from '@/components/CompetitorCard'
 
 function CompetitorsList() {
-  const { auth0User } = useMe()
+  const { clerkUser } = useMe()
+  const { getToken } = useAuth()
 
   const competitorsQ = useQuery({
-    queryKey: ['my-competitors', auth0User?.sub],
-    queryFn: api.listCompetitors,
+    queryKey: ['my-competitors', clerkUser?.id],
+    queryFn: () => api.listCompetitors(getToken),
   })
 
   if (competitorsQ.isLoading) {
@@ -28,7 +30,7 @@ function CompetitorsList() {
           Aún no sigues ningún competidor
         </div>
         <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
-          Ve a la página de un contratista y usa "Seguir competidor".
+          Ve a la página de un contratista y usa “Seguir competidor”.
         </div>
       </div>
     )
@@ -51,7 +53,7 @@ export default function CompetidoresPage() {
           Monitor de competidores
         </h1>
         <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--muted)', maxWidth: 560 }}>
-          Sigue contratistas específicos desde su página de detalle con "Seguir competidor" para verlos aquí.
+          Sigue contratistas específicos desde su página de detalle con “Seguir competidor” para verlos aquí.
         </p>
       </div>
 

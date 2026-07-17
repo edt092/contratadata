@@ -1,32 +1,32 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { api, type CheckoutPlan, type CheckoutResponse } from '@/lib/api'
 
 interface WompiCheckoutButtonProps {
   plan: CheckoutPlan
 }
 
-/** Botón real de pago de Wompi (ver auth.md y src/api/routers/premium.py).
+/** Botón real de pago de Wompi (ver auth2.md y src/api/routers/premium.py).
  * Pide la referencia + firma de integridad al backend y monta el script del
  * widget de Wompi, que se auto-reemplaza por su propio botón de pago al
  * cargar — nunca manejamos datos de tarjeta directamente. */
 export default function WompiCheckoutButton({ plan }: WompiCheckoutButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const { getToken } = useAuth()
   const [checkout, setCheckout] = useState<CheckoutResponse | null>(null)
   const [error, setError] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    setCheckout(null)
-    setError(false)
 
-    api.createCheckout({ plan })
-      .then(data => { if (!cancelled) setCheckout(data) })
-      .catch(() => { if (!cancelled) setError(true) })
+    api.createCheckout(getToken, { plan })
+      .then(data => { if (!cancelled) { setCheckout(data); setError(false) } })
+      .catch(() => { if (!cancelled) { setCheckout(null); setError(true) } })
 
     return () => { cancelled = true }
-  }, [plan])
+  }, [plan, getToken])
 
   useEffect(() => {
     if (!checkout || !containerRef.current) return

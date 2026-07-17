@@ -4,8 +4,10 @@ import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useAuth } from '@clerk/nextjs'
 import { useMe } from '@/lib/useMe'
 import { api } from '@/lib/api'
+import { signInHref } from '@/lib/auth-links'
 import { PREMIUM_ENABLED } from '@/lib/featureFlags'
 
 const PLAN_LABELS: Record<string, string> = {
@@ -24,6 +26,7 @@ const PLAN_LABELS: Record<string, string> = {
 function CheckoutReturnBanner() {
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
+  const { getToken } = useAuth()
   const isReturn = searchParams.get('checkout') === 'return'
 
   const [confirming, setConfirming] = useState(isReturn)
@@ -34,7 +37,7 @@ function CheckoutReturnBanner() {
     let tries = 0
     const interval = setInterval(async () => {
       tries += 1
-      const status = await api.premiumStatus().catch(() => null)
+      const status = await api.premiumStatus(getToken).catch(() => null)
       if (status?.is_pro) {
         queryClient.invalidateQueries({ queryKey: ['me'] })
         queryClient.invalidateQueries({ queryKey: ['premium-status'] })
@@ -47,7 +50,7 @@ function CheckoutReturnBanner() {
       }
     }, 2000)
     return () => clearInterval(interval)
-  }, [isReturn, queryClient])
+  }, [isReturn, queryClient, getToken])
 
   if (!isReturn || (!confirming && !timedOut)) return null
 
@@ -67,7 +70,7 @@ function CheckoutReturnBanner() {
 
 export default function CuentaPage() {
   const pathname = usePathname()
-  const { auth0User, isLoggedIn, isLoading, me } = useMe()
+  const { clerkUser, isLoggedIn, isLoading, me } = useMe()
 
   if (isLoading) {
     return (
@@ -89,7 +92,7 @@ export default function CuentaPage() {
             Inicia sesión para ver tu cuenta
           </div>
           <a
-            href={`/api/auth/login?returnTo=${encodeURIComponent(pathname || '/cuenta')}`}
+            href={signInHref(pathname || '/cuenta')}
             style={{
               display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
               border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,
@@ -114,14 +117,14 @@ export default function CuentaPage() {
         display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20,
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 18,
       }}>
-        {auth0User?.picture ? (
-          <img src={auth0User.picture} alt="" width={48} height={48} style={{ borderRadius: '50%', display: 'block' }} />
+        {clerkUser?.imageUrl ? (
+          <img src={clerkUser.imageUrl} alt="" width={48} height={48} style={{ borderRadius: '50%', display: 'block' }} />
         ) : (
           <span style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--primary)', display: 'block' }} />
         )}
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{auth0User?.name}</div>
-          <div style={{ fontSize: 13, color: 'var(--muted)' }}>{auth0User?.email}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{clerkUser?.fullName}</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>{clerkUser?.primaryEmailAddress?.emailAddress}</div>
         </div>
       </div>
 

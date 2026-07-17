@@ -63,9 +63,13 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
   const [consentimiento, setConsentimiento] = useState(false)
   const [status, setStatus] = useState<Status>('idle')
 
-  useEffect(() => {
+  // Reinicia el estado al abrir sin pasar por un efecto extra (ver
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (open) setStatus('idle')
-  }, [open])
+  }
 
   useEffect(() => {
     if (!open) return

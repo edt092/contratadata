@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@clerk/nextjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type SavedAlertItem } from '@/lib/api'
 import { useMe } from '@/lib/useMe'
@@ -32,23 +33,24 @@ function resumenFiltros(a: SavedAlertItem): string {
 }
 
 function AlertsList() {
-  const { auth0User } = useMe()
+  const { clerkUser } = useMe()
+  const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
   const alertsQ = useQuery({
-    queryKey: ['my-alerts', auth0User?.sub],
-    queryFn: api.listAlerts,
+    queryKey: ['my-alerts', clerkUser?.id],
+    queryFn: () => api.listAlerts(getToken),
   })
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['my-alerts', auth0User?.sub] })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['my-alerts', clerkUser?.id] })
 
   const toggleActive = async (alert: SavedAlertItem) => {
-    await api.updateAlert(alert.id, { is_active: !alert.is_active })
+    await api.updateAlert(getToken, alert.id, { is_active: !alert.is_active })
     invalidate()
   }
 
   const remove = async (alert: SavedAlertItem) => {
-    await api.deleteAlert(alert.id)
+    await api.deleteAlert(getToken, alert.id)
     invalidate()
   }
 
@@ -66,7 +68,7 @@ function AlertsList() {
           Aún no tienes alertas guardadas
         </div>
         <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
-          Ve al dashboard, aplica los filtros que te interesan y usa "Guardar alerta".
+          Ve al dashboard, aplica los filtros que te interesan y usa “Guardar alerta”.
         </div>
       </div>
     )
@@ -130,7 +132,7 @@ export default function AlertasPage() {
           Mis alertas
         </h1>
         <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--muted)', maxWidth: 560 }}>
-          Guarda una búsqueda desde el dashboard con "Guardar alerta" para avisarte cuando haya contratos nuevos que coincidan.
+          Guarda una búsqueda desde el dashboard con “Guardar alerta” para avisarte cuando haya contratos nuevos que coincidan.
         </p>
       </div>
 

@@ -70,20 +70,21 @@ export default function ContratistaPage({ params }: { params: { slug: string } }
 
   // Donut desde datos reales por estado
   const totalByEstado = (byEstadoQ.data ?? []).reduce((a, r) => a + r.cantidad, 0) || 1
-  let acc = 0
-  const donut: DonutSlice[] = (byEstadoQ.data ?? []).map(r => {
-    const frac = r.cantidad / totalByEstado
-    const d: DonutSlice = {
-      estado: r.estado,
-      count: r.cantidad,
-      pct: Math.round(frac * 100),
-      color: estadoStyle(r.estado).fg,
-      dash: `${(frac * 100).toFixed(2)} ${(100 - frac * 100).toFixed(2)}`,
-      offset: (25 - acc * 100).toFixed(2),
-    }
-    acc += frac
-    return d
-  })
+  const donut: DonutSlice[] = (byEstadoQ.data ?? []).reduce<{ acc: number; slices: DonutSlice[] }>(
+    (state, r) => {
+      const frac = r.cantidad / totalByEstado
+      const slice: DonutSlice = {
+        estado: r.estado,
+        count: r.cantidad,
+        pct: Math.round(frac * 100),
+        color: estadoStyle(r.estado).fg,
+        dash: `${(frac * 100).toFixed(2)} ${(100 - frac * 100).toFixed(2)}`,
+        offset: (25 - state.acc * 100).toFixed(2),
+      }
+      return { acc: state.acc + frac, slices: [...state.slices, slice] }
+    },
+    { acc: 0, slices: [] },
+  ).slices
 
   const nit = summary?.nit_o_id_fiscal
     ?? (((2147483647 - (name.length * 733)) % 900000000 + 700000000))
