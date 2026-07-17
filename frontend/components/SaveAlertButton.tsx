@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { api, type Filters, type Frecuencia } from '@/lib/api'
 import { useFeatureGate } from '@/lib/useFeatureGate'
 import PaywallModal from './PaywallModal'
@@ -25,6 +26,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
   const { attempt, showPaywall, closePaywall, feature } = useFeatureGate('saved_alerts')
+  const { getToken } = useAuth()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [frecuencia, setFrecuencia] = useState<Frecuencia>('daily')
@@ -38,7 +40,7 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
     if (name.trim().length < 1) return
     setStatus('guardando')
     try {
-      await api.createAlert({
+      await api.createAlert(getToken, {
         name: name.trim(),
         entidad: filters.entidad || null,
         contratista: filters.contratista || null,
@@ -103,7 +105,7 @@ export default function SaveAlertButton({ filters }: SaveAlertButtonProps) {
 
             {status === 'guardado' ? (
               <p style={{ fontSize: 14, color: 'var(--success)', fontWeight: 600 }}>
-                ✓ Alerta guardada. Puedes verla en "Mis alertas".
+                ✓ Alerta guardada. Puedes verla en “Mis alertas”.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

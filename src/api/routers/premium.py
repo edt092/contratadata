@@ -1,6 +1,6 @@
-"""Premium (ver auth.md): status del plan del usuario autenticado, captura
+"""Premium (ver auth2.md): status del plan del usuario autenticado, captura
 de interés en Pro, y creación de checkouts de Wompi. La fuente de verdad del
-plan vive en Neon (Subscription/PremiumEntitlement) — Auth0 solo confirma la
+plan vive en Neon (Subscription/PremiumEntitlement) — Clerk solo confirma la
 identidad."""
 
 import os
@@ -9,7 +9,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_db, is_pro_user, require_auth0_user
+from src.api.deps import get_db, is_pro_user, require_authenticated_user
 from src.api.routers.me import resolve_entitlements
 from src.api.schemas import (
     CheckoutCreate, CheckoutResponse, PremiumLeadCreate, PremiumLeadResponse,
@@ -29,7 +29,7 @@ PLAN_PERIOD_DAYS = {"monthly": 30, "annual": 365}
 
 @router.get("/status", response_model=PremiumStatusResponse)
 def premium_status(
-    user: AppUser = Depends(require_auth0_user), db: Session = Depends(get_db),
+    user: AppUser = Depends(require_authenticated_user), db: Session = Depends(get_db),
 ) -> PremiumStatusResponse:
     pro = is_pro_user(db, user)
     return PremiumStatusResponse(
@@ -43,7 +43,7 @@ def premium_status(
 @router.post("/request-access", response_model=PremiumLeadResponse)
 def request_access(
     payload: PremiumLeadCreate,
-    user: AppUser = Depends(require_auth0_user),
+    user: AppUser = Depends(require_authenticated_user),
     db: Session = Depends(get_db),
 ) -> PremiumLeadResponse:
     """Registra interés en Pro para un usuario ya autenticado pero Free —
@@ -58,7 +58,7 @@ def request_access(
 @router.post("/checkout", response_model=CheckoutResponse)
 def create_checkout(
     payload: CheckoutCreate,
-    user: AppUser = Depends(require_auth0_user),
+    user: AppUser = Depends(require_authenticated_user),
     db: Session = Depends(get_db),
 ) -> CheckoutResponse:
     """Crea la referencia de pago y la firma de integridad para el widget de

@@ -1,5 +1,6 @@
-"""Alertas guardadas (plan Pro, ver auth.md) — identidad vía JWT Auth0, nunca
-un query param espoofeable.
+"""Alertas guardadas (plan Pro, ver auth2.md) — identidad vía user.id
+(Clerk resuelve la sesión, Neon resuelve la propiedad), nunca un query
+param espoofeable.
 
 El envío automático (email/push cuando hay contratos nuevos que matchean)
 no está implementado todavía; ver evaluate_alerts.py para el chequeo batch
@@ -18,15 +19,9 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 require_saved_alerts = require_feature("saved_alerts")
 
 
-def _require_email(user: AppUser) -> str:
-    if not user.email:
-        raise HTTPException(status_code=400, detail="Tu cuenta de Auth0 no tiene email asociado.")
-    return user.email
-
-
-def _get_owned_alert(db: Session, alert_id: int, email: str) -> SavedAlert:
+def _get_owned_alert(db: Session, alert_id: int, user_id: int) -> SavedAlert:
     alert = db.get(SavedAlert, alert_id)
-    if alert is None or alert.user_email != email:
+    if alert is None or alert.user_id != user_id:
         raise HTTPException(status_code=404, detail="Alerta no encontrada.")
     return alert
 
@@ -37,7 +32,7 @@ def create_alert(
     user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> SavedAlertItem:
-    row = SavedAlert(user_email=_require_email(user), **payload.model_dump())
+    row = SavedAlert(user_id=user.id, **payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -51,7 +46,7 @@ def list_alerts(
 ) -> list[SavedAlertItem]:
     rows = db.execute(
         select(SavedAlert)
-        .where(SavedAlert.user_email == _require_email(user))
+        .where(SavedAlert.user_id == user.id)
         .order_by(SavedAlert.created_at.desc())
     ).scalars().all()
     return [SavedAlertItem.model_validate(r) for r in rows]
@@ -64,7 +59,7 @@ def update_alert(
     user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> SavedAlertItem:
-    alert = _get_owned_alert(db, alert_id, _require_email(user))
+    alert = _get_owned_alert(db, alert_id, user.id)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(alert, key, value)
     db.commit()
@@ -78,6 +73,6 @@ def delete_alert(
     user: AppUser = Depends(require_saved_alerts),
     db: Session = Depends(get_db),
 ) -> None:
-    alert = _get_owned_alert(db, alert_id, _require_email(user))
+    alert = _get_owned_alert(db, alert_id, user.id)
     db.delete(alert)
     db.commit()

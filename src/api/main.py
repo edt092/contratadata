@@ -9,8 +9,9 @@ from fastapi.responses import JSONResponse
 
 from src.api.deps import PremiumRequiredError
 from src.api.routers import (
-    alerts, chart_images, charts, competitors, contratistas, contracts,
-    entidades, estados, feedback, me, pipeline, premium, reports, webhooks,
+    alerts, chart_images, charts, clerk_webhooks, competitors, contratistas,
+    contracts, entidades, estados, feedback, me, pipeline, premium, reports,
+    webhooks,
 )
 
 load_dotenv()
@@ -72,6 +73,7 @@ app.include_router(alerts.router,       prefix=PREFIX)
 app.include_router(competitors.router,  prefix=PREFIX)
 app.include_router(reports.router,      prefix=PREFIX)
 app.include_router(webhooks.router,     prefix=PREFIX)
+app.include_router(clerk_webhooks.router, prefix=PREFIX)
 
 
 # ── Health ───────────────────────────────────────────────────────────────────

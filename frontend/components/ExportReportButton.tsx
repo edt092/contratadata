@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { api, downloadBlob } from '@/lib/api'
 import { useFeatureGate } from '@/lib/useFeatureGate'
 import PaywallModal from './PaywallModal'
@@ -12,11 +13,12 @@ interface ExportReportButtonProps {
 
 export default function ExportReportButton({ kind, nombre }: ExportReportButtonProps) {
   const { attempt, showPaywall, closePaywall, feature } = useFeatureGate('reports')
+  const { getToken } = useAuth()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const fetchReport = (format: 'xlsx' | 'pdf') =>
-    kind === 'entity' ? api.downloadEntityReport(nombre, format) : api.downloadContractorReport(nombre, format)
+    kind === 'entity' ? api.downloadEntityReport(getToken, nombre, format) : api.downloadContractorReport(getToken, nombre, format)
 
   const download = (format: 'xlsx' | 'pdf') => {
     setOpen(false)

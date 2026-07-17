@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.ts";
 
 /* ── ContrataData theme (data-theme + dark class) ──────────────────────────── */
 :root,
@@ -77,6 +76,70 @@
   --ring: 222 47% 45%;
 }
 
+/* ── Design system: tokens compartidos (Fase 2) ───────────────────────────────
+   Alias semánticos sobre las variables de tema existentes (--bg, --surface,
+   --text, --muted, --border, --primary...) más los tokens que faltaban:
+   radios, sombras, blur, contenedores, motion y paleta de charts. No se
+   renombra nada existente para no romper el dashboard actual. */
+:root {
+  --surface-elevated: var(--surface2);
+  --focus-ring: var(--primary);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.38);
+
+  --blur-sm: 8px;
+  --blur-md: 16px;
+
+  --container-xs: 640px;
+  --container-sm: 768px;
+  --container-md: 1024px;
+  --container-lg: 1280px;
+  --container-xl: 1340px;
+
+  --motion-fast: 150ms;
+  --motion-standard: 300ms;
+  --motion-editorial: 600ms;
+  --motion-cinematic: 1200ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Paleta para gráficas y visualizaciones (orden de asignación por serie) */
+  --chart-1: #3B82F6;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #A78BFA;
+  --chart-5: #F472B6;
+}
+
+/* ── Design system: identidad de marca para marketing (Fase 2/4) ─────────────
+   Paleta emerald/verde eléctrico sobre fondo oscuro cálido, escopeada a
+   `.marketing` (el layout de app/(marketing)) para no alterar el azul del
+   dashboard/producto existente en /explorar y el resto de la app. */
+.marketing {
+  --brand-bg: #0A0F0D;
+  --brand-surface: #101613;
+  --brand-surface-elevated: #161F1A;
+  --brand-border: #1E2B24;
+  --brand-text: #F4F8F5;
+  --brand-text-muted: #92A69B;
+  --brand-primary: #16E8A0;
+  --brand-primary-foreground: #04140E;
+  --brand-accent-blue: #4C8DFF;
+  --brand-accent-amber: #F0B54C;
+  --brand-verified: #2FB8A6;
+  --brand-focus-ring: #16E8A0;
+
+  background: var(--brand-bg);
+  color: var(--brand-text);
+}
+
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -94,6 +157,20 @@ body {
 }
 
 ::selection { background: rgba(59, 130, 246, 0.3); }
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 input, select, button { font-family: inherit; }
 

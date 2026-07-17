@@ -4,7 +4,7 @@ Plataforma de datos abiertos que consolida, normaliza y visualiza contratos púb
 
 **Live:** [contratadata.xyz](https://contratadata.xyz)
 
-MVP Premium (alertas, monitor de competidores, reportes, plan Pro) documentado en [`docs/premium-mvp.md`](docs/premium-mvp.md). Autenticación con Auth0 en [`docs/auth0-setup.md`](docs/auth0-setup.md).
+MVP Premium (alertas, monitor de competidores, reportes, plan Pro) documentado en [`docs/premium-mvp.md`](docs/premium-mvp.md). Autenticación con Clerk en [`docs/clerk-setup.md`](docs/clerk-setup.md).
 
 ---
 

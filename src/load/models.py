@@ -153,22 +153,33 @@ class Feedback(Base):
 
 
 class AppUser(Base):
-    """Usuario autenticado vía Auth0 (ver auth.md). Auth0 responde 'quién es
-    el usuario' (auth0_sub es la identidad estable); ContrataData/Neon
-    responde 'qué plan tiene' (Subscription/PremiumEntitlement) — nunca al
-    revés. Se crea/actualiza en cada sync (GET /api/me o cualquier endpoint
-    autenticado), no en el login en sí."""
+    """Usuario autenticado vía Clerk (ver auth2.md — migrado desde Auth0).
+    (auth_provider, auth_provider_user_id) es la identidad estable;
+    ContrataData/Neon responde 'qué plan tiene' (Subscription/
+    PremiumEntitlement) — nunca al revés. Se crea/actualiza en cada sync
+    (GET /api/me o cualquier endpoint autenticado), no en el login en sí.
+
+    'auth0_sub' queda como columna histórica (usuarios migrados desde Auth0,
+    ver migrate_auth_clerk.py) hasta que cleanup_auth0_columns.py la elimine;
+    ya no se usa para resolver identidad."""
     __tablename__ = "app_users"
 
-    id             = Column(Integer, primary_key=True, autoincrement=True)
-    auth0_sub      = Column(String(255), unique=True, nullable=False)
-    email          = Column(String(255), unique=True)
-    email_verified = Column(Boolean, nullable=False, default=False)
-    name           = Column(String(255))
-    picture        = Column(String(1000))
-    created_at     = Column(DateTime, nullable=False, default=func.now())
-    updated_at     = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
-    last_login_at  = Column(DateTime)
+    id                    = Column(Integer, primary_key=True, autoincrement=True)
+    auth0_sub             = Column(String(255), unique=True)
+    auth_provider         = Column(String(30))
+    auth_provider_user_id = Column(String(255))
+    email                 = Column(String(255), unique=True)
+    email_verified        = Column(Boolean, nullable=False, default=False)
+    name                  = Column(String(255))
+    picture               = Column(String(1000))
+    is_active             = Column(Boolean, nullable=False, default=True)
+    created_at            = Column(DateTime, nullable=False, default=func.now())
+    updated_at            = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    last_login_at         = Column(DateTime)
+
+    __table_args__ = (
+        UniqueConstraint("auth_provider", "auth_provider_user_id", name="uq_app_user_provider_identity"),
+    )
 
     def __repr__(self) -> str:
         return f"<AppUser id={self.id} email='{self.email}'>"
@@ -237,11 +248,16 @@ class PremiumLead(Base):
 
 
 class SavedAlert(Base):
-    """Alerta guardada por un usuario Pro sobre una búsqueda/filtro."""
+    """Alerta guardada por un usuario Pro sobre una búsqueda/filtro.
+
+    'user_id' es la propiedad real (ver auth2.md FASE 7); 'user_email' queda
+    nullable como dato informativo hasta que cleanup_auth0_columns.py la
+    elimine — no se usa para resolver acceso."""
     __tablename__ = "saved_alerts"
 
     id              = Column(Integer, primary_key=True, autoincrement=True)
-    user_email      = Column(String(255), nullable=False)
+    user_id         = Column(Integer, ForeignKey("app_users.id"))
+    user_email      = Column(String(255))
     name            = Column(String(200), nullable=False)
     entidad         = Column(String(500))
     contratista     = Column(String(500))
@@ -262,14 +278,22 @@ class SavedAlert(Base):
 
 
 class CompetitorWatch(Base):
-    """Contratista seguido por un usuario Pro (monitor de competidores)."""
+    """Contratista seguido por un usuario Pro (monitor de competidores).
+
+    'user_id' es la propiedad real (ver auth2.md FASE 7); 'user_email' queda
+    nullable como dato informativo hasta que cleanup_auth0_columns.py la
+    elimine. La UNIQUE por email se conserva en paralelo a la de user_id
+    hasta ese mismo cleanup, para no perder la protección anti-duplicados
+    durante la ventana de backfill."""
     __tablename__ = "competitor_watchlist"
     __table_args__ = (
         UniqueConstraint("user_email", "supplier_name", name="uq_competitor_watch_user_supplier"),
+        UniqueConstraint("user_id", "supplier_name", name="uq_competitor_watch_userid_supplier"),
     )
 
     id            = Column(Integer, primary_key=True, autoincrement=True)
-    user_email    = Column(String(255), nullable=False)
+    user_id       = Column(Integer, ForeignKey("app_users.id"))
+    user_email    = Column(String(255))
     supplier_name = Column(String(500), nullable=False)
     nickname      = Column(String(200))
     is_active     = Column(Boolean, nullable=False, default=True)

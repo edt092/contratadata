@@ -22,6 +22,30 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run unit tests
-        run: pytest tests/test_extract.py tests/test_transform.py tests/test_auth0.py -v --cov=src --cov-report=term-missing
+        run: pytest tests/test_extract.py tests/test_transform.py tests/test_clerk.py tests/test_deps.py tests/test_webhooks_clerk.py tests/test_alerts.py tests/test_competitors.py -v --cov=src --cov-report=term-missing
         env:
           SOCRATA_APP_TOKEN: ""
+
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        working-directory: frontend
+        run: pnpm test

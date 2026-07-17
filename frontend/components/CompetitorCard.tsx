@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@clerk/nextjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BarList } from '@tremor/react'
 import { api, type CompetitorItem } from '@/lib/api'
@@ -13,7 +14,8 @@ interface CompetitorCardProps {
 
 export default function CompetitorCard({ competitor }: CompetitorCardProps) {
   const router = useRouter()
-  const { auth0User } = useMe()
+  const { clerkUser } = useMe()
+  const { getToken } = useAuth()
   const queryClient = useQueryClient()
   const name = competitor.supplier_name
 
@@ -31,8 +33,8 @@ export default function CompetitorCard({ competitor }: CompetitorCardProps) {
   })
 
   const unfollow = async () => {
-    await api.unfollowCompetitor(competitor.id)
-    queryClient.invalidateQueries({ queryKey: ['my-competitors', auth0User?.sub] })
+    await api.unfollowCompetitor(getToken, competitor.id)
+    queryClient.invalidateQueries({ queryKey: ['my-competitors', clerkUser?.id] })
   }
 
   const summary = summaryQ.data

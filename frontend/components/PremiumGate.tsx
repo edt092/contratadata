@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { useMe } from '@/lib/useMe'
 import { usePremiumStatus } from '@/lib/usePremiumStatus'
+import { signInHref } from '@/lib/auth-links'
 import type { FeatureKey } from '@/lib/api'
 import ProUpgradeCard from './ProUpgradeCard'
 
@@ -12,7 +13,7 @@ interface PremiumGateProps {
   children: ReactNode
 }
 
-/** Gate declarativo para secciones/páginas enteras (ver auth.md):
+/** Gate declarativo para secciones/páginas enteras (ver auth2.md):
  * no logueado → CTA de login; logueado pero sin el plan/entitlement →
  * paywall suave; con acceso → children. El frontend nunca decide el acceso
  * de forma definitiva — esto solo refleja lo que ya validó el backend en
@@ -39,7 +40,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
           Guardamos tus alertas, competidores y reportes en tu cuenta.
         </div>
         <a
-          href={`/api/auth/login?returnTo=${encodeURIComponent(pathname || '/')}`}
+          href={signInHref(pathname || '/')}
           style={{
             display: 'inline-block', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
             border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13.5, fontWeight: 600,

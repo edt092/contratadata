@@ -1,7 +1,7 @@
 """Utilidad de admin: marcar un usuario como Pro (o revertirlo) creando/
-actualizando su Subscription (ver auth.md). Reemplaza al admin_set_premium.py
+actualizando su Subscription (ver auth2.md). Reemplaza al admin_set_premium.py
 anterior (que operaba sobre la tabla premium_users del modelo email-based,
-ver scalability.md — ya sin uso tras la migración a Auth0).
+ver scalability.md — ya sin uso desde la migración a Auth0, y luego a Clerk).
 
 Requiere que el usuario ya exista en app_users, es decir que haya iniciado
 sesión al menos una vez (GET /api/me sincroniza el AppUser en su primer

@@ -1,6 +1,6 @@
 'use client'
 
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import { api, type FeatureKey } from '@/lib/api'
 
@@ -8,12 +8,13 @@ import { api, type FeatureKey } from '@/lib/api'
  * useMe() porque varios componentes de gating (PremiumGate, botones) solo
  * necesitan esto, no el perfil completo. */
 export function usePremiumStatus() {
-  const { user: auth0User, isLoading: authLoading } = useUser()
+  const { user: clerkUser, isLoaded } = useUser()
+  const { getToken } = useAuth()
 
   const statusQ = useQuery({
-    queryKey: ['premium-status', auth0User?.sub],
-    queryFn: api.premiumStatus,
-    enabled: !!auth0User,
+    queryKey: ['premium-status', clerkUser?.id],
+    queryFn: () => api.premiumStatus(getToken),
+    enabled: !!clerkUser,
     retry: false,
     staleTime: 30_000,
   })
@@ -25,8 +26,8 @@ export function usePremiumStatus() {
   }
 
   return {
-    isLoggedIn: !!auth0User,
-    isLoading: authLoading || (!!auth0User && statusQ.isLoading),
+    isLoggedIn: !!clerkUser,
+    isLoading: !isLoaded || (!!clerkUser && statusQ.isLoading),
     status: statusQ.data,
     hasAccess,
   }
